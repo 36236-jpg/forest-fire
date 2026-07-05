@@ -134,19 +134,22 @@
 
   /* ===== Sensor cards ===== */
   .sensor-grid{
-    display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; margin-bottom:18px;
+    display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:18px;
   }
   .sensor-card{
     background:var(--bg-panel); border:1px solid var(--line); border-radius:14px;
-    padding:16px 18px;
+    padding:14px 18px;
+    display:flex; align-items:center; gap:18px;
   }
-  .sensor-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .sensor-info{ flex:1 1 auto; min-width:0; }
+  .sensor-head{ display:flex; align-items:center; gap:7px; margin-bottom:8px;}
   .sensor-name{ font-size:12.5px; color:var(--text-muted); font-weight:500;}
   .sensor-icon{ font-size:15px; opacity:0.8; }
-  .sensor-value{ font-family:'JetBrains Mono',monospace; font-size:28px; font-weight:700; letter-spacing:-0.01em;}
+  .sensor-value{ font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:700; letter-spacing:-0.01em;}
   .sensor-unit{ font-size:13px; color:var(--text-faint); margin-left:3px; font-weight:400;}
-  .sensor-range{ font-size:11px; color:var(--text-faint); margin-top:5px;}
-  .spark{ width:100%; height:34px; margin-top:8px; }
+  .sensor-range{ font-size:11px; color:var(--text-faint); margin-top:4px;}
+  .spark-wrap{ flex:0 0 130px; width:130px; }
+  .spark{ width:100%; height:46px; display:block; }
 
   /* ===== Trend chart panel ===== */
   .trend-panel{ padding:18px 20px 12px; }
@@ -200,9 +203,11 @@
     .clock{ font-size:12px; }
     .grid{ gap:14px; }
     .panel{ padding:16px; border-radius:12px; }
-    .sensor-grid{ grid-template-columns:1fr 1fr; gap:10px; }
-    .sensor-card{ padding:13px 14px; }
-    .sensor-value{ font-size:22px; }
+    .sensor-grid{ grid-template-columns:1fr; gap:10px; }
+    .sensor-card{ padding:12px 14px; gap:12px; }
+    .sensor-value{ font-size:20px; }
+    .spark-wrap{ flex-basis:90px; width:90px; }
+    .spark{ height:38px; }
     .gauge-wrap{ width:210px; }
     .gauge-pct{ font-size:36px; }
     .fire-triangle{ gap:12px; }
@@ -213,7 +218,7 @@
     .log-list{ max-height:340px; }
   }
   @media (max-width: 380px){
-    .sensor-grid{ grid-template-columns:1fr; }
+    .spark-wrap{ flex-basis:74px; width:74px; }
   }
 
   /* ===== Map row ===== */
@@ -225,11 +230,38 @@
   .map-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;}
   .map-holder{
     height:320px; border-radius:10px; overflow:hidden; border:1px solid var(--line);
+    position:relative;
   }
   .leaflet-container{ background:#e5e3df !important; font-family:'IBM Plex Sans Thai',sans-serif; }
   .gps-fix{
     display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-muted);
     padding:6px 12px; border:1px solid var(--line); border-radius:100px; background:var(--bg-panel-raised);
+  }
+
+  /* ===== Risk legend overlay (on map) ===== */
+  .risk-legend{
+    position:absolute; right:14px; bottom:14px; z-index:500;
+    background:rgba(29,37,24,0.94); border:1px solid var(--line); border-radius:12px;
+    padding:12px 14px; backdrop-filter:blur(6px);
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    max-width:220px;
+  }
+  .risk-legend-head{
+    display:flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:600; color:var(--text-muted);
+    text-transform:uppercase; letter-spacing:0.08em; margin-bottom:9px;
+  }
+  .risk-legend-bar{
+    display:flex; height:10px; border-radius:5px; overflow:hidden; margin-bottom:8px;
+  }
+  .risk-legend-bar span{ flex:1; }
+  .risk-legend-rows{ display:flex; flex-direction:column; gap:5px; }
+  .risk-legend-row{ display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); }
+  .risk-legend-swatch{ width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+  .risk-legend-row b{ color:var(--text-primary); font-weight:600; font-family:'JetBrains Mono',monospace; font-size:10.5px; }
+  @media (max-width: 640px){
+    .risk-legend{ left:12px; right:12px; bottom:12px; max-width:none; padding:10px 12px; }
+    .risk-legend-rows{ flex-direction:row; flex-wrap:wrap; gap:8px 14px; }
   }
 
   .node-panel{ display:flex; flex-direction:column; gap:12px; }
@@ -305,28 +337,36 @@
     <div>
       <div class="sensor-grid">
         <div class="sensor-card">
-          <div class="sensor-head"><span class="sensor-name">อุณหภูมิ</span><span class="sensor-icon">🌡️</span></div>
-          <div><span class="sensor-value mono" id="valTemp">36.3</span><span class="sensor-unit">°C</span></div>
-          <div class="sensor-range">ช่วงปกติ: 24–35°C</div>
-          <canvas class="spark" id="sparkTemp"></canvas>
+          <div class="sensor-info">
+            <div class="sensor-head"><span class="sensor-name">อุณหภูมิ</span><span class="sensor-icon">🌡️</span></div>
+            <div><span class="sensor-value mono" id="valTemp">36.3</span><span class="sensor-unit">°C</span></div>
+            <div class="sensor-range">ช่วงปกติ: 24–35°C</div>
+          </div>
+          <div class="spark-wrap"><canvas class="spark" id="sparkTemp"></canvas></div>
         </div>
         <div class="sensor-card">
-          <div class="sensor-head"><span class="sensor-name">ความชื้นสัมพัทธ์</span><span class="sensor-icon">💧</span></div>
-          <div><span class="sensor-value mono" id="valHum">44.7</span><span class="sensor-unit">%</span></div>
-          <div class="sensor-range">ช่วงปกติ: 45–90%</div>
-          <canvas class="spark" id="sparkHum"></canvas>
+          <div class="sensor-info">
+            <div class="sensor-head"><span class="sensor-name">ความชื้นสัมพัทธ์</span><span class="sensor-icon">💧</span></div>
+            <div><span class="sensor-value mono" id="valHum">44.7</span><span class="sensor-unit">%</span></div>
+            <div class="sensor-range">ช่วงปกติ: 45–90%</div>
+          </div>
+          <div class="spark-wrap"><canvas class="spark" id="sparkHum"></canvas></div>
         </div>
         <div class="sensor-card">
-          <div class="sensor-head"><span class="sensor-name">ควัน (MQ-2)</span><span class="sensor-icon">💨</span></div>
-          <div><span class="sensor-value mono" id="valSmoke">246</span><span class="sensor-unit">ppm</span></div>
-          <div class="sensor-range">ช่วงปกติ: &lt; 800 ADC</div>
-          <canvas class="spark" id="sparkSmoke"></canvas>
+          <div class="sensor-info">
+            <div class="sensor-head"><span class="sensor-name">ควัน (MQ-2)</span><span class="sensor-icon">💨</span></div>
+            <div><span class="sensor-value mono" id="valSmoke">246</span><span class="sensor-unit">ppm</span></div>
+            <div class="sensor-range">ช่วงปกติ: &lt; 800 ADC</div>
+          </div>
+          <div class="spark-wrap"><canvas class="spark" id="sparkSmoke"></canvas></div>
         </div>
         <div class="sensor-card">
-          <div class="sensor-head"><span class="sensor-name">ฝุ่นละออง PM2.5</span><span class="sensor-icon">🌫️</span></div>
-          <div><span class="sensor-value mono" id="valPM">21.5</span><span class="sensor-unit">µg/m³</span></div>
-          <div class="sensor-range">ช่วงปกติ: &lt; 100 µg/m³</div>
-          <canvas class="spark" id="sparkPM"></canvas>
+          <div class="sensor-info">
+            <div class="sensor-head"><span class="sensor-name">ฝุ่นละออง PM2.5</span><span class="sensor-icon">🌫️</span></div>
+            <div><span class="sensor-value mono" id="valPM">21.5</span><span class="sensor-unit">µg/m³</span></div>
+            <div class="sensor-range">ช่วงปกติ: &lt; 100 µg/m³</div>
+          </div>
+          <div class="spark-wrap"><canvas class="spark" id="sparkPM"></canvas></div>
         </div>
       </div>
 
@@ -359,7 +399,21 @@
         <div class="panel-label" style="margin-bottom:0;">ตำแหน่งโหนดเซนเซอร์ภาคสนาม</div>
         <div class="gps-fix"><span class="dot" id="gpsDot"></span><span id="gpsFixText">GPS Fix · ความแม่นยำ ~3 ม.</span></div>
       </div>
-      <div class="map-holder" id="mapHolder"></div>
+      <div class="map-holder" id="mapHolder">
+        <div class="risk-legend">
+          <div class="risk-legend-head">🔥 ระดับความเสี่ยง</div>
+          <div class="risk-legend-bar">
+            <span style="background:#22c55e;"></span>
+            <span style="background:#f59e0b;"></span>
+            <span style="background:#ef4444;"></span>
+          </div>
+          <div class="risk-legend-rows">
+            <div class="risk-legend-row"><span class="risk-legend-swatch" style="background:#22c55e;"></span><b>0–49%</b>&nbsp;ปกติ</div>
+            <div class="risk-legend-row"><span class="risk-legend-swatch" style="background:#f59e0b;"></span><b>50–79%</b>&nbsp;เฝ้าระวัง</div>
+            <div class="risk-legend-row"><span class="risk-legend-swatch" style="background:#ef4444;"></span><b>80–100%</b>&nbsp;ไฟป่า</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="panel node-panel">
