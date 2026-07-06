@@ -35,16 +35,71 @@
   }
   .mono{font-family:'JetBrains Mono',monospace;}
 
-  /* background texture */
   body{
     background-image:
       radial-gradient(ellipse 900px 500px at 15% -10%, rgba(127,166,92,0.08), transparent 60%),
       radial-gradient(ellipse 700px 500px at 100% 0%, rgba(232,100,43,0.06), transparent 60%);
   }
 
-  .app{ max-width:1400px; margin:0 auto; padding:20px 24px 60px; }
+  .app{ max-width:1400px; margin:0 auto; padding:20px 24px 60px; display:none; }
+  .app.visible{ display:block; }
 
-  /* ===== Header ===== */
+  /* ===== LOGIN SCREEN ===== */
+  .login-overlay{
+    position:fixed; inset:0; z-index:2000;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg-void);
+    background-image:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(127,166,92,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 100%, rgba(232,100,43,0.07), transparent 60%);
+    padding:20px;
+  }
+  .login-card{
+    width:100%; max-width:380px;
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:16px;
+    padding:30px 28px 26px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.45);
+  }
+  .login-brand{ display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+  .login-brand .brand-mark{
+    width:40px; height:40px; border-radius:9px;
+    background:linear-gradient(155deg, var(--moss), #547a3d);
+    display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .login-brand h1{ font-size:16.5px; font-weight:700; }
+  .login-brand p{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+
+  .login-tabs{ display:flex; gap:6px; margin-bottom:20px; background:var(--bg-panel-raised); padding:4px; border-radius:10px; border:1px solid var(--line); }
+  .login-tab{
+    flex:1; text-align:center; padding:9px 10px; border-radius:8px; cursor:pointer;
+    font-size:13px; font-weight:600; color:var(--text-muted); transition:all 0.15s ease; user-select:none;
+  }
+  .login-tab.active{ background:var(--bg-panel); color:var(--text-primary); box-shadow:0 0 0 1px var(--line); }
+
+  .login-form{ display:none; flex-direction:column; gap:12px; }
+  .login-form.active{ display:flex; }
+  .login-field label{ display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:6px; letter-spacing:0.02em; }
+  .login-field input{
+    width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--line);
+    background:var(--bg-panel-raised); color:var(--text-primary); font-family:inherit; font-size:13.5px;
+    outline:none; transition:border-color 0.15s ease;
+  }
+  .login-field input:focus{ border-color:var(--moss); }
+  .login-btn{
+    margin-top:6px; width:100%; padding:12px; border-radius:9px; border:none;
+    background:linear-gradient(135deg, var(--moss), #3a7a2e); color:#0e1a0c;
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:filter 0.15s ease;
+  }
+  .login-btn:hover{ filter:brightness(1.08); }
+  .login-btn:active{ transform:scale(0.99); }
+  .login-error{
+    display:none; font-size:12px; color:var(--ember); background:rgba(239,68,68,0.1);
+    border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:9px 11px; margin-top:2px;
+  }
+  .login-error.visible{ display:block; }
+  .login-note{ font-size:11px; color:var(--text-faint); margin-top:16px; line-height:1.6; text-align:center; }
+
   .topbar{
     display:flex; align-items:center; justify-content:space-between;
     padding:14px 4px 20px;
@@ -60,25 +115,31 @@
     font-size:19px; flex-shrink:0;
     box-shadow:0 0 0 1px rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.35);
   }
-  .brand-text h1{
-    font-size:17px; font-weight:700; letter-spacing:0.02em;
-  }
-  .brand-text p{
-    font-size:12px; color:var(--text-muted); margin-top:2px;
-  }
-  .topbar-right{ display:flex; align-items:center; gap:22px; }
+  .brand-text h1{ font-size:17px; font-weight:700; letter-spacing:0.02em; }
+  .brand-text p{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+  .topbar-right{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
   .status-chip{
     display:flex; align-items:center; gap:8px;
     font-size:12.5px; color:var(--text-muted);
     padding:7px 12px; border:1px solid var(--line); border-radius:100px;
     background:var(--bg-panel);
   }
+  .role-badge{
+    font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:100px;
+    letter-spacing:0.03em;
+  }
+  .role-badge.admin{ background:rgba(245,158,11,0.14); color:var(--amber); border:1px solid rgba(245,158,11,0.35); }
+  .role-badge.user{ background:rgba(148,163,184,0.14); color:#94a3b8; border:1px solid rgba(148,163,184,0.3); }
+  .logout-btn{
+    font-size:12px; color:var(--text-muted); background:var(--bg-panel); border:1px solid var(--line);
+    padding:7px 12px; border-radius:100px; cursor:pointer; font-family:inherit;
+  }
+  .logout-btn:hover{ border-color:var(--text-faint); color:var(--text-primary); }
   .dot{ width:7px; height:7px; border-radius:50%; background:var(--moss); flex-shrink:0;
     box-shadow:0 0 8px var(--moss); animation:pulse 2.4s ease-in-out infinite; }
   @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
   .clock{ font-size:13px; color:var(--text-primary); }
 
-  /* ===== Grid layout ===== */
   .grid{
     display:grid;
     grid-template-columns: 340px 1fr 300px;
@@ -98,7 +159,6 @@
     color:var(--text-faint); font-weight:600; margin-bottom:14px;
   }
 
-  /* ===== Gauge panel (signature element) ===== */
   .gauge-panel{ text-align:center; display:flex; flex-direction:column; align-items:center; }
   .gauge-wrap{ position:relative; width:250px; height:250px; max-width:100%; aspect-ratio:1/1; margin:6px 0 6px; }
   #gaugeCanvas{ width:100%; height:100%; display:block; }
@@ -132,14 +192,10 @@
   .tri-item .v{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }
   .tri-item .l{ font-size:10.5px; color:var(--text-faint); margin-top:3px; letter-spacing:0.04em; }
 
-  /* ===== Sensor cards ===== */
-  .sensor-grid{
-    display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:18px;
-  }
+  .sensor-grid{ display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:18px; }
   .sensor-card{
     background:var(--bg-panel); border:1px solid var(--line); border-radius:14px;
-    padding:14px 18px;
-    display:flex; align-items:center; gap:18px;
+    padding:14px 18px; display:flex; align-items:center; gap:18px;
   }
   .sensor-info{ flex:1 1 auto; min-width:0; }
   .sensor-head{ display:flex; align-items:center; gap:7px; margin-bottom:8px;}
@@ -151,7 +207,6 @@
   .spark-wrap{ flex:0 0 130px; width:130px; }
   .spark{ width:100%; height:46px; display:block; }
 
-  /* ===== Trend chart panel ===== */
   .trend-panel{ padding:18px 20px 12px; }
   .trend-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:10px;}
   .legend{ display:flex; gap:14px; flex-wrap:wrap; }
@@ -159,13 +214,9 @@
   .legend-dot{ width:9px; height:9px; border-radius:2px; }
   .chart-holder{ height:230px; margin-top:10px; }
 
-  /* ===== Right column: alert log ===== */
   .log-panel{ display:flex; flex-direction:column; height:100%; }
   .log-list{ display:flex; flex-direction:column; gap:0; max-height:560px; overflow-y:auto; }
-  .log-item{
-    padding:12px 2px; border-bottom:1px solid var(--line-soft);
-    display:flex; gap:11px;
-  }
+  .log-item{ padding:12px 2px; border-bottom:1px solid var(--line-soft); display:flex; gap:11px; }
   .log-item:last-child{ border-bottom:none; }
   .log-marker{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
   .log-marker.fire{ background:var(--ember); box-shadow:0 0 7px var(--ember);}
@@ -176,6 +227,7 @@
   .log-title{ font-size:13px; font-weight:600; }
   .log-time{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint); white-space:nowrap;}
   .log-detail{ font-size:11.5px; color:var(--text-muted); margin-top:3px; font-family:'JetBrains Mono',monospace; }
+  .log-empty{ font-size:12px; color:var(--text-faint); padding:14px 2px; text-align:center; }
 
   .sim-btn{
     margin-top:16px; width:100%; padding:11px; border-radius:10px; border:1px solid var(--line);
@@ -186,12 +238,89 @@
   .sim-btn:hover{ background:var(--line); border-color:var(--text-faint); }
   .sim-btn:active{ transform:scale(0.98); }
 
-  .footer-note{
-    text-align:center; font-size:11.5px; color:var(--text-faint); margin-top:26px; line-height:1.7;
-  }
+  .admin-only{ display:none; }
+  .role-admin .admin-only{ display:flex; }
+  .role-admin .admin-only.block{ display:block; }
+  .role-admin .admin-only.grid-cols{ display:grid; }
+
+  .footer-note{ text-align:center; font-size:11.5px; color:var(--text-faint); margin-top:26px; line-height:1.7; }
   .footer-note b{ color:var(--text-muted); }
 
-  /* ===== Mobile refinements ===== */
+  .fire-banner{
+    display:none;
+    align-items:center; justify-content:space-between; gap:14px;
+    background:linear-gradient(120deg, #7f1d1d, #b91c1c);
+    border:1px solid rgba(255,255,255,0.15);
+    border-radius:14px; padding:14px 20px; margin-bottom:18px;
+    box-shadow:0 8px 24px rgba(185,28,28,0.35);
+  }
+  .fire-banner.active{ display:flex; animation:bannerPulse 1.8s ease-in-out infinite; }
+  @keyframes bannerPulse{ 0%,100%{ box-shadow:0 8px 24px rgba(185,28,28,0.35);} 50%{ box-shadow:0 8px 34px rgba(239,68,68,0.6);} }
+  .fire-banner-text{ display:flex; align-items:center; gap:12px; }
+  .fire-banner-icon{ font-size:26px; }
+  .fire-banner-title{ font-size:15px; font-weight:700; color:#fff; }
+  .fire-banner-sub{ font-size:12px; color:rgba(255,255,255,0.8); margin-top:2px; }
+  .fire-banner-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .fire-banner-btn{
+    display:inline-flex; align-items:center; gap:7px;
+    background:#fff; color:#7f1d1d; font-weight:700; font-size:13px;
+    padding:9px 16px; border-radius:100px; text-decoration:none; white-space:nowrap;
+  }
+  .fire-banner-btn.secondary{ background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3); }
+  @media (max-width: 640px){
+    .fire-banner{ flex-direction:column; align-items:stretch; }
+    .fire-banner-actions{ width:100%; }
+    .fire-banner-btn{ flex:1; justify-content:center; }
+  }
+
+  .bottom-row{ display:grid; grid-template-columns: 1fr 1fr; gap:18px; margin-top:18px; }
+  @media (max-width: 1100px){ .bottom-row{ grid-template-columns:1fr; } }
+
+  .contact-list{ display:flex; flex-direction:column; gap:10px; }
+  .contact-card{
+    display:flex; align-items:center; gap:12px;
+    background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px; padding:11px 14px;
+  }
+  .contact-card.self{ border-color:rgba(34,197,94,0.35); }
+  .contact-icon{
+    width:34px; height:34px; border-radius:9px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+    background:rgba(237,232,220,0.06);
+  }
+  .contact-info{ flex:1; min-width:0; }
+  .contact-name{ font-size:13px; font-weight:600; }
+  .contact-sub{ font-size:11px; color:var(--text-faint); margin-top:1px; }
+  .contact-number{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text-muted); margin-top:2px; }
+  .call-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(34,197,94,0.14); color:var(--moss); border:1px solid rgba(34,197,94,0.3);
+    font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:100px;
+    text-decoration:none; flex-shrink:0; transition:background 0.15s ease;
+  }
+  .call-btn:hover{ background:rgba(34,197,94,0.24); }
+
+  .stats-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin-bottom:16px; }
+  .stat-card{
+    background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px;
+    padding:14px 12px; text-align:center;
+  }
+  .stat-value{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; }
+  .stat-label{ font-size:10.5px; color:var(--text-faint); margin-top:4px; line-height:1.4; }
+  .export-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  .export-btn{
+    flex:1; min-width:150px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px; border-radius:10px; border:1px solid var(--line);
+    background:var(--bg-panel-raised); color:var(--text-primary); font-family:inherit;
+    font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s ease;
+  }
+  .export-btn:hover{ background:var(--line); border-color:var(--text-faint); }
+  @media (max-width: 640px){
+    .stats-grid{ grid-template-columns:repeat(3, 1fr); gap:8px; }
+    .stat-value{ font-size:18px; }
+    .contact-card{ padding:10px 12px; }
+  }
+
   @media (max-width: 640px){
     .app{ padding:14px 12px 40px; }
     .brand-mark{ width:32px; height:32px; font-size:16px; }
@@ -217,43 +346,29 @@
     .node-card{ padding:11px 12px; }
     .log-list{ max-height:340px; }
   }
-  @media (max-width: 380px){
-    .spark-wrap{ flex-basis:74px; width:74px; }
-  }
+  @media (max-width: 380px){ .spark-wrap{ flex-basis:74px; width:74px; } }
 
-  /* ===== Map row ===== */
-  .map-row{
-    display:grid; grid-template-columns: 1fr 300px; gap:18px; margin-top:18px;
-  }
+  .map-row{ display:grid; grid-template-columns: 1fr 300px; gap:18px; margin-top:18px; }
   @media (max-width: 1100px){ .map-row{ grid-template-columns: 1fr; } }
   .map-panel{ padding:20px 20px 20px; }
   .map-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:10px;}
-  .map-holder{
-    height:320px; border-radius:10px; overflow:hidden; border:1px solid var(--line);
-    position:relative;
-  }
+  .map-holder{ height:320px; border-radius:10px; overflow:hidden; border:1px solid var(--line); position:relative; }
   .leaflet-container{ background:#e5e3df !important; font-family:'IBM Plex Sans Thai',sans-serif; }
   .gps-fix{
     display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-muted);
     padding:6px 12px; border:1px solid var(--line); border-radius:100px; background:var(--bg-panel-raised);
   }
 
-  /* ===== Risk legend overlay (on map) ===== */
   .risk-legend{
     position:absolute; right:14px; bottom:14px; z-index:500;
     background:rgba(29,37,24,0.94); border:1px solid var(--line); border-radius:12px;
-    padding:12px 14px; backdrop-filter:blur(6px);
-    box-shadow:0 6px 18px rgba(0,0,0,0.35);
-    max-width:220px;
+    padding:12px 14px; backdrop-filter:blur(6px); box-shadow:0 6px 18px rgba(0,0,0,0.35); max-width:220px;
   }
   .risk-legend-head{
-    display:flex; align-items:center; gap:6px;
-    font-size:11px; font-weight:600; color:var(--text-muted);
+    display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--text-muted);
     text-transform:uppercase; letter-spacing:0.08em; margin-bottom:9px;
   }
-  .risk-legend-bar{
-    display:flex; height:10px; border-radius:5px; overflow:hidden; margin-bottom:8px;
-  }
+  .risk-legend-bar{ display:flex; height:10px; border-radius:5px; overflow:hidden; margin-bottom:8px; }
   .risk-legend-bar span{ flex:1; }
   .risk-legend-rows{ display:flex; flex-direction:column; gap:5px; }
   .risk-legend-row{ display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); }
@@ -275,10 +390,7 @@
   .node-coord{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-faint); margin-top:2px;}
   .node-state{ font-size:11px; font-weight:600; }
 
-  /* custom leaflet popup theming */
-  .leaflet-popup-content-wrapper{
-    background:var(--bg-panel); color:var(--text-primary); border-radius:10px; border:1px solid var(--line);
-  }
+  .leaflet-popup-content-wrapper{ background:var(--bg-panel); color:var(--text-primary); border-radius:10px; border:1px solid var(--line); }
   .leaflet-popup-tip{ background:var(--bg-panel); }
   .popup-title{ font-weight:700; font-size:13px; margin-bottom:6px; }
   .popup-row{ font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-muted); line-height:1.6;}
@@ -295,7 +407,58 @@
 </style>
 </head>
 <body>
-<div class="app">
+
+<!-- ================= LOGIN SCREEN ================= -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">🌲</div>
+      <div>
+        <h1>FOREST GUARD</h1>
+        <p>เข้าสู่ระบบเพื่อดูแดชบอร์ด</p>
+      </div>
+    </div>
+
+    <div class="login-tabs">
+      <div class="login-tab active" id="tabUser" onclick="switchLoginTab('user')">ผู้ใช้ทั่วไป</div>
+      <div class="login-tab" id="tabAdmin" onclick="switchLoginTab('admin')">ผู้ดูแลระบบ</div>
+    </div>
+
+    <!-- ผู้ใช้ทั่วไป: รหัสผ่านช่องเดียว -->
+    <div class="login-form active" id="formUser">
+      <div class="login-field">
+        <label>รหัสผ่านผู้ใช้</label>
+        <input type="password" id="userPasscode" placeholder="กรอกรหัสผ่าน" autocomplete="off">
+      </div>
+      <button class="login-btn" onclick="attemptUserLogin()">เข้าสู่ระบบ</button>
+    </div>
+
+    <!-- ผู้ดูแลระบบ: อีเมล + รหัสผ่าน + โค้ดลับ -->
+    <div class="login-form" id="formAdmin">
+      <div class="login-field">
+        <label>อีเมลผู้ดูแล</label>
+        <input type="email" id="adminEmail" placeholder="admin@example.com" autocomplete="off">
+      </div>
+      <div class="login-field">
+        <label>รหัสผ่าน</label>
+        <input type="password" id="adminPassword" placeholder="รหัสผ่าน" autocomplete="off">
+      </div>
+      <div class="login-field">
+        <label>โค้ดลับผู้ดูแล</label>
+        <input type="password" id="adminSecret" placeholder="รหัสลับเฉพาะผู้ดูแล" autocomplete="off">
+      </div>
+      <button class="login-btn" onclick="attemptAdminLogin()">เข้าสู่ระบบผู้ดูแล</button>
+    </div>
+
+    <div class="login-error" id="loginError"></div>
+    <div class="login-note">
+      หน้านี้เป็นการยืนยันตัวตนระดับหน้าเว็บเท่านั้น (ไม่มีเซิร์ฟเวอร์ตรวจสอบส่วนกลาง)<br>
+      ใช้เพื่อจำกัดการเข้าถึงเบื้องต้น ไม่ใช่ระบบความปลอดภัยระดับสูง
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app">
 
   <div class="topbar">
     <div class="brand">
@@ -306,40 +469,55 @@
       </div>
     </div>
     <div class="topbar-right">
+      <span class="role-badge admin" id="roleBadge" style="display:none;">ผู้ดูแลระบบ</span>
       <div class="status-chip"><span class="dot" id="connDot"></span><span id="connText">โหนดเซนเซอร์ออนไลน์</span></div>
       <div class="clock mono" id="clock">--:--:--</div>
+      <button class="logout-btn" onclick="logout()">ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <div class="fire-banner" id="fireBanner">
+    <div class="fire-banner-text">
+      <div class="fire-banner-icon">🔥</div>
+      <div>
+        <div class="fire-banner-title">ตรวจพบสภาวะไฟป่า — โทรแจ้งเหตุทันที</div>
+        <div class="fire-banner-sub">Sender-01 · อ.ปากช่อง จ.นครราชสีมา</div>
+      </div>
+    </div>
+    <div class="fire-banner-actions">
+      <a class="fire-banner-btn" href="tel:199">📞 199 ดับเพลิง</a>
+      <a class="fire-banner-btn secondary" href="tel:1362">📞 1362 พิทักษ์ป่า</a>
+      <a class="fire-banner-btn secondary" href="tel:0970708920">📞 ผู้ดูแลระบบ</a>
     </div>
   </div>
 
   <div class="grid">
 
-    <!-- LEFT: Risk gauge -->
     <div class="panel gauge-panel state-normal" id="gaugePanel">
       <div class="panel-label" style="align-self:flex-start;">ระดับความเสี่ยง (AI)</div>
       <div class="gauge-wrap">
         <canvas id="gaugeCanvas" width="250" height="250"></canvas>
         <div class="gauge-readout">
-          <div class="gauge-pct mono" id="gaugePct">4%</div>
+          <div class="gauge-pct mono" id="gaugePct">--%</div>
           <div class="gauge-pct-label">ความน่าจะเป็น</div>
         </div>
       </div>
-      <div class="status-pill"><span class="ring"></span><span id="statusText">สภาวะปกติ</span></div>
-      <div class="gauge-note">อัปเดตล่าสุดจากบอร์ด Receiver ทุก 10 วินาที<br>ผ่านโมเดล TinyML บน Edge Impulse</div>
+      <div class="status-pill"><span class="ring"></span><span id="statusText">รอข้อมูล...</span></div>
+      <div class="gauge-note">อัปเดตล่าสุดจากบอร์ด Receiver ทุก ~7 วินาที<br>ผ่านโมเดล TinyML บน Edge Impulse</div>
 
       <div class="fire-triangle">
-        <div class="tri-item"><div class="v mono" id="triFuel">ปกติ</div><div class="l">เชื้อเพลิง</div></div>
-        <div class="tri-item"><div class="v mono" id="triOx">ปกติ</div><div class="l">ออกซิเจน</div></div>
-        <div class="tri-item"><div class="v mono" id="triHeat">ปกติ</div><div class="l">ความร้อน</div></div>
+        <div class="tri-item"><div class="v mono" id="triFuel">-</div><div class="l">เชื้อเพลิง</div></div>
+        <div class="tri-item"><div class="v mono" id="triOx">-</div><div class="l">ออกซิเจน</div></div>
+        <div class="tri-item"><div class="v mono" id="triHeat">-</div><div class="l">ความร้อน</div></div>
       </div>
     </div>
 
-    <!-- CENTER: sensor cards + trend chart -->
     <div>
       <div class="sensor-grid">
         <div class="sensor-card">
           <div class="sensor-info">
             <div class="sensor-head"><span class="sensor-name">อุณหภูมิ</span><span class="sensor-icon">🌡️</span></div>
-            <div><span class="sensor-value mono" id="valTemp">36.3</span><span class="sensor-unit">°C</span></div>
+            <div><span class="sensor-value mono" id="valTemp">--</span><span class="sensor-unit">°C</span></div>
             <div class="sensor-range">ช่วงปกติ: 24–35°C</div>
           </div>
           <div class="spark-wrap"><canvas class="spark" id="sparkTemp"></canvas></div>
@@ -347,7 +525,7 @@
         <div class="sensor-card">
           <div class="sensor-info">
             <div class="sensor-head"><span class="sensor-name">ความชื้นสัมพัทธ์</span><span class="sensor-icon">💧</span></div>
-            <div><span class="sensor-value mono" id="valHum">44.7</span><span class="sensor-unit">%</span></div>
+            <div><span class="sensor-value mono" id="valHum">--</span><span class="sensor-unit">%</span></div>
             <div class="sensor-range">ช่วงปกติ: 45–90%</div>
           </div>
           <div class="spark-wrap"><canvas class="spark" id="sparkHum"></canvas></div>
@@ -355,7 +533,7 @@
         <div class="sensor-card">
           <div class="sensor-info">
             <div class="sensor-head"><span class="sensor-name">ควัน (MQ-2)</span><span class="sensor-icon">💨</span></div>
-            <div><span class="sensor-value mono" id="valSmoke">246</span><span class="sensor-unit">ppm</span></div>
+            <div><span class="sensor-value mono" id="valSmoke">--</span><span class="sensor-unit">ppm</span></div>
             <div class="sensor-range">ช่วงปกติ: &lt; 800 ADC</div>
           </div>
           <div class="spark-wrap"><canvas class="spark" id="sparkSmoke"></canvas></div>
@@ -363,7 +541,7 @@
         <div class="sensor-card">
           <div class="sensor-info">
             <div class="sensor-head"><span class="sensor-name">ฝุ่นละออง PM2.5</span><span class="sensor-icon">🌫️</span></div>
-            <div><span class="sensor-value mono" id="valPM">21.5</span><span class="sensor-unit">µg/m³</span></div>
+            <div><span class="sensor-value mono" id="valPM">--</span><span class="sensor-unit">µg/m³</span></div>
             <div class="sensor-range">ช่วงปกติ: &lt; 100 µg/m³</div>
           </div>
           <div class="spark-wrap"><canvas class="spark" id="sparkPM"></canvas></div>
@@ -372,7 +550,7 @@
 
       <div class="panel trend-panel">
         <div class="trend-head">
-          <div class="panel-label" style="margin-bottom:0;">แนวโน้มค่าจากเซนเซอร์ (60 นาทีล่าสุด)</div>
+          <div class="panel-label" style="margin-bottom:0;">แนวโน้มค่าจากเซนเซอร์ (ล่าสุด)</div>
           <div class="legend">
             <div class="legend-item"><span class="legend-dot" style="background:#e8642b;"></span>อุณหภูมิ</div>
             <div class="legend-item"><span class="legend-dot" style="background:#4a8fd4;"></span>ความชื้น</div>
@@ -384,11 +562,11 @@
       </div>
     </div>
 
-    <!-- RIGHT: alert log -->
     <div class="panel log-panel">
       <div class="panel-label">บันทึกการแจ้งเตือน</div>
       <div class="log-list" id="logList"></div>
-      <button class="sim-btn" id="simBtn">▶ จำลองข้อมูลเซนเซอร์ใหม่</button>
+      <!-- ปุ่มจำลองข้อมูล: เฉพาะผู้ดูแลระบบ -->
+      <button class="sim-btn admin-only" id="simBtn">▶ จำลองข้อมูลเซนเซอร์ใหม่ (ทดสอบ)</button>
     </div>
 
   </div>
@@ -422,9 +600,9 @@
         <div class="node-marker" id="nodeMarkerDot" style="background:#7fa65c; box-shadow:0 0 7px #7fa65c;"></div>
         <div class="node-info">
           <div class="node-name">Sender-01 · จุดตรวจวัดหลัก</div>
-          <div class="node-coord" id="nodeCoordText">14.70030, 101.40790</div>
+          <div class="node-coord" id="nodeCoordText">รอข้อมูล...</div>
         </div>
-        <div class="node-state" id="nodeStateText" style="color:#7fa65c;">ปกติ</div>
+        <div class="node-state" id="nodeStateText" style="color:#7fa65c;">-</div>
       </div>
       <div class="gauge-note" style="text-align:left; margin-top:2px;">
         พิกัดอ้างอิงจากโมดูล GPS (NEO-6M) บนบอร์ด Sender ส่งพ่วงมากับข้อมูลเซนเซอร์ทุกรอบผ่าน LoRa<br><br>
@@ -433,36 +611,207 @@
     </div>
   </div>
 
+  <div class="bottom-row">
+    <div class="panel">
+      <div class="panel-label">ติดต่อฉุกเฉิน</div>
+      <div class="contact-list">
+        <div class="contact-card self">
+          <div class="contact-icon">👤</div>
+          <div class="contact-info">
+            <div class="contact-name">ผู้ดูแลระบบ (เบอร์คุณ)</div>
+            <div class="contact-number mono">097-070-8920</div>
+          </div>
+          <a class="call-btn" href="tel:0970708920">📞 โทร</a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">🌲</div>
+          <div class="contact-info">
+            <div class="contact-name">สายด่วนพิทักษ์ป่า (กรมอุทยานฯ)</div>
+            <div class="contact-sub">แจ้งเหตุไฟป่า/บุกรุกป่า · ตลอด 24 ชม.</div>
+            <div class="contact-number mono">1362</div>
+          </div>
+          <a class="call-btn" href="tel:1362">📞 โทร</a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">🚒</div>
+          <div class="contact-info">
+            <div class="contact-name">แจ้งเหตุเพลิงไหม้ / ดับเพลิง</div>
+            <div class="contact-sub">ศูนย์รับแจ้งเหตุไฟไหม้และกู้ภัย ทั่วประเทศ</div>
+            <div class="contact-number mono">199</div>
+          </div>
+          <a class="call-btn" href="tel:199">📞 โทร</a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-icon">🚓</div>
+          <div class="contact-info">
+            <div class="contact-name">เหตุด่วนเหตุร้าย (ตำรวจ)</div>
+            <div class="contact-sub">กรณีต้องการอพยพ/ควบคุมพื้นที่</div>
+            <div class="contact-number mono">191</div>
+          </div>
+          <a class="call-btn" href="tel:191">📞 โทร</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- สรุปรายสัปดาห์ & ส่งออกข้อมูล: เฉพาะผู้ดูแลระบบ -->
+    <div class="panel admin-only block">
+      <div class="panel-label">สรุปรายสัปดาห์ &amp; ส่งออกข้อมูล</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value mono" id="statFire" style="color:var(--ember);">0</div>
+          <div class="stat-label">ครั้งที่เข้าสภาวะ<br>ไฟป่า (ล่าสุด)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value mono" id="statWatch" style="color:var(--amber);">0</div>
+          <div class="stat-label">ครั้งที่เข้าสภาวะ<br>เฝ้าระวัง (ล่าสุด)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value mono" id="statUptime" style="color:var(--moss);">--%</div>
+          <div class="stat-label">Uptime ของโหนด<br>เซนเซอร์</div>
+        </div>
+      </div>
+      <div class="export-row">
+        <button class="export-btn" id="exportCsvBtn">⬇ ส่งออกบันทึกเป็น CSV</button>
+        <button class="export-btn" id="printBtn">🖨 พิมพ์รายงาน</button>
+      </div>
+      <div class="gauge-note" style="text-align:left; margin-top:14px;">
+        ข้อมูลสรุปคำนวณจากบันทึกการแจ้งเตือนที่ดึงมาจาก Google Sheet ใช้สำหรับทำรายงานประจำให้หน่วยงานที่เกี่ยวข้อง
+      </div>
+    </div>
+  </div>
+
   <div class="footer-note">
-    ต้นแบบหน้าจอแสดงผล (Prototype) — ข้อมูลในหน้านี้เป็นข้อมูลจำลองเพื่อสาธิตการแสดงผล<br>
-    ระบบจริงเชื่อมต่อจากบอร์ด <b>ESP-WROOM-32 (Receiver)</b> ผ่าน LoRa และวิเคราะห์ด้วยโมเดล <b>TinyML</b>
+    เชื่อมต่อข้อมูลจริงจากบอร์ด <b>ESP-WROOM-32 (Receiver)</b> ผ่าน LoRa และวิเคราะห์ด้วยโมเดล <b>TinyML</b> — บันทึกลง Google Sheet แบบเรียลไทม์
   </div>
 
 </div>
 
 <script>
-/* ---------- clock ---------- */
+/* =========================================================
+   CONFIG — แก้ค่าตรงนี้ตามที่ต้องการ
+   ========================================================= */
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbxRGQUCTwskqKM1qZepMaBvqPC-Sr5UJpaZfsbcmTy6oNawUIxymSj9CeOvf7pLgXzxbA/exec";
+const POLL_INTERVAL_MS = 7000;
+
+// ⚠️ เปลี่ยนค่าเหล่านี้เป็นของคุณเอง — เก็บเป็น plain text ในไฟล์นี้
+// (นี่คือ UI gate เท่านั้น ไม่ใช่ระบบยืนยันตัวตนระดับ server จริง)
+const USER_PASSCODE   = "guard2026";                 // รหัสผ่านสำหรับผู้ใช้ทั่วไป
+const ADMIN_EMAIL     = "admin@forestguard.local";    // อีเมลผู้ดูแล
+const ADMIN_PASSWORD  = "changeme123";                // รหัสผ่านผู้ดูแล
+const ADMIN_SECRET    = "PAKCHONG-FIRE-2026";         // โค้ดลับผู้ดูแล (ต้องกรอกเพิ่มอีก 1 ช่อง)
+
+/* =========================================================
+   LOGIN LOGIC
+   ========================================================= */
+let currentRole = null; // 'admin' | 'user' | null
+
+function switchLoginTab(tab){
+  document.getElementById('tabUser').classList.toggle('active', tab==='user');
+  document.getElementById('tabAdmin').classList.toggle('active', tab==='admin');
+  document.getElementById('formUser').classList.toggle('active', tab==='user');
+  document.getElementById('formAdmin').classList.toggle('active', tab==='admin');
+  hideLoginError();
+}
+
+function showLoginError(msg){
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function hideLoginError(){
+  document.getElementById('loginError').classList.remove('visible');
+}
+
+function attemptUserLogin(){
+  const val = document.getElementById('userPasscode').value.trim();
+  if(val === USER_PASSCODE && val.length > 0){
+    enterApp('user');
+  } else {
+    showLoginError('รหัสผ่านไม่ถูกต้อง');
+  }
+}
+
+function attemptAdminLogin(){
+  const email = document.getElementById('adminEmail').value.trim();
+  const pass  = document.getElementById('adminPassword').value;
+  const secret = document.getElementById('adminSecret').value.trim();
+  if(email === ADMIN_EMAIL && pass === ADMIN_PASSWORD && secret === ADMIN_SECRET){
+    enterApp('admin');
+  } else {
+    showLoginError('อีเมล รหัสผ่าน หรือโค้ดลับไม่ถูกต้อง');
+  }
+}
+
+function enterApp(role){
+  currentRole = role;
+  document.getElementById('loginOverlay').style.display = 'none';
+  const app = document.getElementById('app');
+  app.classList.add('visible');
+  app.classList.remove('role-admin');
+  if(role === 'admin'){
+    app.classList.add('role-admin');
+    const badge = document.getElementById('roleBadge');
+    badge.style.display = 'inline-flex';
+  } else {
+    document.getElementById('roleBadge').style.display = 'none';
+  }
+  initDashboard();
+}
+
+function logout(){
+  currentRole = null;
+  clearInterval(pollTimerId);
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('userPasscode').value = '';
+  document.getElementById('adminEmail').value = '';
+  document.getElementById('adminPassword').value = '';
+  document.getElementById('adminSecret').value = '';
+  hideLoginError();
+}
+
+// Enter key submits the active form
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Enter') return;
+  const overlay = document.getElementById('loginOverlay');
+  if(overlay.style.display === 'none') return;
+  if(document.getElementById('formUser').classList.contains('active')) attemptUserLogin();
+  else attemptAdminLogin();
+});
+
+/* =========================================================
+   DASHBOARD (เริ่มทำงานหลังล็อกอินสำเร็จ)
+   ========================================================= */
+let dashboardInitialized = false;
+let pollTimerId = null;
+
+function initDashboard(){
+  if(dashboardInitialized){
+    // แค่รีสตาร์ท polling หลัง logout แล้ว login ใหม่
+    pollLiveData();
+    pollTimerId = setInterval(pollLiveData, POLL_INTERVAL_MS);
+    return;
+  }
+  dashboardInitialized = true;
+  setupDashboard();
+}
+
 function tickClock(){
   const d = new Date();
   document.getElementById('clock').textContent = d.toLocaleTimeString('th-TH', {hour12:false});
 }
-setInterval(tickClock, 1000); tickClock();
 
-/* ---------- state colors ---------- */
-const COLORS = {
-  normal: '#22c55e', watch:'#f59e0b', fire:'#ef4444'
-};
+const COLORS = { normal: '#22c55e', watch:'#f59e0b', fire:'#ef4444' };
 
-/* ---------- risk gauge (custom canvas dial) ---------- */
-const gaugeCanvas = document.getElementById('gaugeCanvas');
-const gctx = gaugeCanvas.getContext('2d');
+let gctx, sparkCharts = {}, trendChart, map, nodeMarker;
+let NODE_LAT = 14.70030, NODE_LNG = 101.40790;
+let seedLogs = [];
 
 function drawGauge(prob, state){
   const cx = 125, cy = 132, r = 96;
-  const startAngle = Math.PI * 0.72, endAngle = Math.PI * 2.28; // sweep ~275deg
+  const startAngle = Math.PI * 0.72, endAngle = Math.PI * 2.28;
   gctx.clearRect(0,0,250,250);
 
-  // background zones
   const zones = [
     {from:0, to:0.5, color:'rgba(34,197,94,0.55)'},
     {from:0.5, to:0.8, color:'rgba(245,158,11,0.55)'},
@@ -479,7 +828,6 @@ function drawGauge(prob, state){
     gctx.stroke();
   });
 
-  // tick marks
   gctx.strokeStyle = 'rgba(237,232,220,0.25)';
   gctx.lineWidth = 1.5;
   for(let i=0;i<=20;i++){
@@ -492,7 +840,6 @@ function drawGauge(prob, state){
     gctx.stroke();
   }
 
-  // progress arc (bright)
   gctx.beginPath();
   gctx.lineWidth = 10;
   gctx.lineCap = 'round';
@@ -504,7 +851,6 @@ function drawGauge(prob, state){
   gctx.stroke();
   gctx.shadowBlur = 0;
 
-  // needle
   const needleLen = r - 22;
   const na = aEnd;
   gctx.beginPath();
@@ -519,8 +865,6 @@ function drawGauge(prob, state){
   gctx.fill();
 }
 
-/* ---------- sparklines (mini charts) ---------- */
-const sparkCharts = {};
 function makeSpark(id, color, data){
   const ctx = document.getElementById(id).getContext('2d');
   sparkCharts[id] = new Chart(ctx, {
@@ -536,80 +880,42 @@ function makeSpark(id, color, data){
   });
 }
 
-function randWalk(n, base, spread){
-  let v = base; const out=[];
-  for(let i=0;i<n;i++){ v += (Math.random()-0.5)*spread; out.push(+v.toFixed(1)); }
-  return out;
-}
-
-const sparkTempData = randWalk(20, 32, 1.2);
-const sparkHumData = randWalk(20, 48, 2);
-const sparkSmokeData = randWalk(20, 300, 40);
-const sparkPMData = randWalk(20, 25, 4);
-
-makeSpark('sparkTemp', '#e8642b', sparkTempData);
-makeSpark('sparkHum', '#4a8fd4', sparkHumData);
-makeSpark('sparkSmoke', '#d9a441', sparkSmokeData);
-makeSpark('sparkPM', '#8d9784', sparkPMData);
-
-/* ---------- trend chart ---------- */
-const trendCtx = document.getElementById('trendChart').getContext('2d');
-const timeLabels = Array.from({length:12}, (_,i)=>{
-  const m = 55 - i*5; return (m<0? '' : '-'+m+'m');
-}).reverse();
-
-const trendChart = new Chart(trendCtx, {
-  type:'line',
-  data:{
-    labels: timeLabels,
-    datasets:[
-      { label:'อุณหภูมิ (°C)', data: randWalk(12,32,1.5), borderColor:'#e8642b', backgroundColor:'#e8642b22', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
-      { label:'ความชื้น (%)', data: randWalk(12,48,3), borderColor:'#4a8fd4', backgroundColor:'#4a8fd422', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
-      { label:'ควัน (ADC/10)', data: randWalk(12,32,4), borderColor:'#d9a441', backgroundColor:'#d9a44122', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
-      { label:'ฝุ่น (µg/m³)', data: randWalk(12,25,3), borderColor:'#8d9784', backgroundColor:'#8d978422', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
-    ]
-  },
-  options:{
-    responsive:true, maintainAspectRatio:false,
-    interaction:{ mode:'index', intersect:false },
-    plugins:{ legend:{ display:false }, tooltip:{
-      backgroundColor:'#1d2518', borderColor:'#37402e', borderWidth:1, titleColor:'#ede8dc', bodyColor:'#c7cabe'
-    }},
-    scales:{
-      x:{ grid:{ color:'#252f1f' }, ticks:{ color:'#5e6856', font:{family:'JetBrains Mono', size:10} } },
-      y:{ grid:{ color:'#252f1f' }, ticks:{ color:'#5e6856', font:{family:'JetBrains Mono', size:10} } }
-    }
-  }
-});
-
-/* ---------- alert log ---------- */
-const logList = document.getElementById('logList');
-const seedLogs = [
-  {type:'fire', title:'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE', time:'22:38:04', detail:'T:43.5°C  H:30%  Smoke:1900  Prob:1.00'},
-  {type:'watch', title:'เข้าสู่สภาวะเฝ้าระวัง', time:'22:31:47', detail:'T:39.7°C  H:38%  Smoke:1450  Prob:0.62'},
-  {type:'normal', title:'กลับสู่สภาวะปกติ', time:'18:02:11', detail:'T:33.1°C  H:52%  Smoke:410  Prob:0.03'},
-  {type:'watch', title:'เข้าสู่สภาวะเฝ้าระวัง', time:'17:54:33', detail:'T:37.2°C  H:41%  Smoke:1280  Prob:0.55'},
-];
-
 function iconFor(type){ return type==='fire' ? 'fire' : type==='watch' ? 'watch' : 'normal'; }
 
 function renderLogs(){
+  const logList = document.getElementById('logList');
   logList.innerHTML = '';
-  seedLogs.forEach(l=>{
-    const item = document.createElement('div');
-    item.className = 'log-item';
-    item.innerHTML = `
-      <div class="log-marker ${iconFor(l.type)}"></div>
-      <div class="log-body">
-        <div class="log-top"><span class="log-title">${l.title}</span><span class="log-time">${l.time}</span></div>
-        <div class="log-detail">${l.detail}</div>
-      </div>`;
-    logList.appendChild(item);
-  });
+  if(seedLogs.length === 0){
+    logList.innerHTML = '<div class="log-empty">ยังไม่มีการแจ้งเตือน</div>';
+  } else {
+    seedLogs.forEach(l=>{
+      const item = document.createElement('div');
+      item.className = 'log-item';
+      item.innerHTML = `
+        <div class="log-marker ${iconFor(l.type)}"></div>
+        <div class="log-body">
+          <div class="log-top"><span class="log-title">${l.title}</span><span class="log-time">${l.time}</span></div>
+          <div class="log-detail">${l.detail}</div>
+        </div>`;
+      logList.appendChild(item);
+    });
+  }
+  updateWeeklyStats();
 }
-renderLogs();
 
-/* ---------- state application ---------- */
+function updateWeeklyStats(){
+  const fireCount = seedLogs.filter(l=>l.type==='fire').length;
+  const watchCount = seedLogs.filter(l=>l.type==='watch').length;
+  const statFireEl = document.getElementById('statFire');
+  const statWatchEl = document.getElementById('statWatch');
+  if(statFireEl) statFireEl.textContent = fireCount;
+  if(statWatchEl) statWatchEl.textContent = watchCount;
+}
+
+function updateFireBanner(state){
+  document.getElementById('fireBanner').classList.toggle('active', state === 'fire');
+}
+
 function applyState(prob){
   const panel = document.getElementById('gaugePanel');
   let state, label, fuel, ox, heat;
@@ -626,16 +932,9 @@ function applyState(prob){
   document.getElementById('triOx').textContent = ox;
   document.getElementById('triHeat').textContent = heat;
   drawGauge(prob, state);
+  updateFireBanner(state);
   return state;
 }
-
-/* ---------- map (Leaflet + dark OSM tiles) ---------- */
-const NODE_LAT = 14.70030, NODE_LNG = 101.40790; // ปากช่อง, นครราชสีมา (ตัวอย่าง)
-
-const map = L.map('mapHolder', { zoomControl:true, attributionControl:false }).setView([NODE_LAT, NODE_LNG], 13);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-  subdomains:'abcd', maxZoom:19
-}).addTo(map);
 
 function pinIcon(color, pulsing){
   const ring = pulsing ? `<div class="map-pin-ring" style="background:${color};"></div>` : '';
@@ -652,14 +951,6 @@ function pinIcon(color, pulsing){
     iconSize:[34,44], iconAnchor:[17,42], popupAnchor:[0,-38]
   });
 }
-
-let nodeMarker = L.marker([NODE_LAT, NODE_LNG], { icon: pinIcon(COLORS.normal, false) }).addTo(map);
-nodeMarker.bindPopup(`
-  <div class="popup-title">Sender-01 · จุดตรวจวัดหลัก</div>
-  <div class="popup-row">Lat: ${NODE_LAT.toFixed(5)}</div>
-  <div class="popup-row">Lng: ${NODE_LNG.toFixed(5)}</div>
-  <div class="popup-row">สถานะ: ปกติ</div>
-`);
 
 function updateMapMarker(state, lat, lng){
   const color = COLORS[state];
@@ -681,62 +972,219 @@ function updateMapMarker(state, lat, lng){
   if(state === 'fire') map.panTo([lat,lng]);
 }
 
-let currentProb = 0.04;
-applyState(currentProb);
-updateMapMarker('normal', NODE_LAT, NODE_LNG);
+/* ---------- live data fetch (Google Sheets) ---------- */
+async function fetchLatest(){
+  try{
+    const res = await fetch(SHEET_URL + '?type=latest');
+    const json = await res.json();
+    if(json.status !== 'ok' || !json.data) return;
+    const d = json.data;
 
-/* ---------- simulate button ---------- */
-document.getElementById('simBtn').addEventListener('click', ()=>{
-  // random new sensor snapshot
-  const roll = Math.random();
-  let temp, hum, smoke, pm, prob;
-  if(roll < 0.6){ temp=(24+Math.random()*11).toFixed(1); hum=(45+Math.random()*40).toFixed(1); smoke=Math.round(200+Math.random()*500); pm=(10+Math.random()*40).toFixed(1); prob=Math.random()*0.4; }
-  else if(roll < 0.85){ temp=(36.5+Math.random()*8.4).toFixed(1); hum=(30+Math.random()*15).toFixed(1); smoke=Math.round(1220+Math.random()*750); pm=(60+Math.random()*60).toFixed(1); prob=0.5+Math.random()*0.3; }
-  else { temp=(45.5+Math.random()*14).toFixed(1); hum=(10+Math.random()*20).toFixed(1); smoke=Math.round(2000+Math.random()*2000); pm=(100+Math.random()*150).toFixed(1); prob=0.8+Math.random()*0.2; }
+    document.getElementById('valTemp').textContent = Number(d.temperature).toFixed(1);
+    document.getElementById('valHum').textContent = Number(d.humidity).toFixed(1);
+    document.getElementById('valSmoke').textContent = Math.round(d.smoke);
+    document.getElementById('valPM').textContent = Number(d.pm25).toFixed(1);
 
-  document.getElementById('valTemp').textContent = temp;
-  document.getElementById('valHum').textContent = hum;
-  document.getElementById('valSmoke').textContent = smoke;
-  document.getElementById('valPM').textContent = pm;
+    const prob = Number(d.probability);
+    const state = applyState(prob);
 
-  const state = applyState(prob);
+    NODE_LAT = Number(d.lat);
+    NODE_LNG = Number(d.lng);
+    updateMapMarker(state, NODE_LAT, NODE_LNG);
 
-  // GPS reading jitters slightly each transmission (real-world noise)
-  const jitLat = NODE_LAT + (Math.random()-0.5)*0.0006;
-  const jitLng = NODE_LNG + (Math.random()-0.5)*0.0006;
-  updateMapMarker(state, jitLat, jitLng);
+    [['sparkTemp', d.temperature], ['sparkHum', d.humidity],
+     ['sparkSmoke', d.smoke/8], ['sparkPM', d.pm25]].forEach(([id,val])=>{
+      const ch = sparkCharts[id];
+      ch.data.datasets[0].data.push(+val);
+      ch.data.datasets[0].data.shift();
+      ch.update('none');
+    });
 
-  // update sparklines
-  [['sparkTemp',temp],['sparkHum',hum],['sparkSmoke',smoke/8],['sparkPM',pm]].forEach(([id,val])=>{
-    const ch = sparkCharts[id];
-    ch.data.datasets[0].data.push(+val);
-    ch.data.datasets[0].data.shift();
-    ch.update('none');
+    document.getElementById('connText').textContent = 'โหนดเซนเซอร์ออนไลน์';
+    document.getElementById('connDot').style.background = COLORS.normal;
+  }catch(err){
+    console.error('fetchLatest error:', err);
+    document.getElementById('connText').textContent = 'เชื่อมต่อ Sheet ไม่ได้';
+    document.getElementById('connDot').style.background = COLORS.fire;
+  }
+}
+
+async function fetchHistory(){
+  try{
+    const res = await fetch(SHEET_URL + '?type=history&limit=12');
+    const json = await res.json();
+    if(json.status !== 'ok' || !Array.isArray(json.data)) return;
+    const rows = json.data;
+    if(rows.length === 0) return;
+
+    trendChart.data.labels = rows.map(r=>{
+      const t = new Date(r.timestamp);
+      return t.toLocaleTimeString('th-TH',{hour12:false, hour:'2-digit', minute:'2-digit'});
+    });
+    trendChart.data.datasets[0].data = rows.map(r=>Number(r.temperature));
+    trendChart.data.datasets[1].data = rows.map(r=>Number(r.humidity));
+    trendChart.data.datasets[2].data = rows.map(r=>Number(r.smoke)/10);
+    trendChart.data.datasets[3].data = rows.map(r=>Number(r.pm25));
+    trendChart.update('none');
+  }catch(err){
+    console.error('fetchHistory error:', err);
+  }
+}
+
+async function fetchAlerts(){
+  try{
+    const res = await fetch(SHEET_URL + '?type=alerts&limit=12');
+    const json = await res.json();
+    if(json.status !== 'ok' || !Array.isArray(json.data)) return;
+
+    seedLogs = json.data.map(r=>{
+      const prob = Number(r.probability);
+      const t = new Date(r.timestamp);
+      const timeStr = t.toLocaleTimeString('th-TH',{hour12:false});
+      const type = prob >= 0.8 ? 'fire' : 'watch';
+      const title = type === 'fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE' : 'เข้าสู่สภาวะเฝ้าระวัง';
+      const detail = `T:${Number(r.temperature).toFixed(1)}°C  H:${Number(r.humidity).toFixed(0)}%  Smoke:${Math.round(r.smoke)}  Prob:${prob.toFixed(2)}`;
+      return { type, title, time: timeStr, detail };
+    });
+    renderLogs();
+  }catch(err){
+    console.error('fetchAlerts error:', err);
+  }
+}
+
+function pollLiveData(){
+  fetchLatest();
+  fetchHistory();
+  fetchAlerts();
+}
+
+/* ---------- setup: runs once after first login ---------- */
+function setupDashboard(){
+  tickClock();
+  setInterval(tickClock, 1000);
+
+  gctx = document.getElementById('gaugeCanvas').getContext('2d');
+
+  const zeroData = Array(20).fill(0);
+  makeSpark('sparkTemp', '#e8642b', [...zeroData]);
+  makeSpark('sparkHum', '#4a8fd4', [...zeroData]);
+  makeSpark('sparkSmoke', '#d9a441', [...zeroData]);
+  makeSpark('sparkPM', '#8d9784', [...zeroData]);
+
+  const trendCtx = document.getElementById('trendChart').getContext('2d');
+  trendChart = new Chart(trendCtx, {
+    type:'line',
+    data:{
+      labels: Array(12).fill(''),
+      datasets:[
+        { label:'อุณหภูมิ (°C)', data: Array(12).fill(0), borderColor:'#e8642b', backgroundColor:'#e8642b22', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
+        { label:'ความชื้น (%)', data: Array(12).fill(0), borderColor:'#4a8fd4', backgroundColor:'#4a8fd422', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
+        { label:'ควัน (ADC/10)', data: Array(12).fill(0), borderColor:'#d9a441', backgroundColor:'#d9a44122', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
+        { label:'ฝุ่น (µg/m³)', data: Array(12).fill(0), borderColor:'#8d9784', backgroundColor:'#8d978422', tension:0.35, pointRadius:0, borderWidth:2, yAxisID:'y'},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ display:false }, tooltip:{
+        backgroundColor:'#1d2518', borderColor:'#37402e', borderWidth:1, titleColor:'#ede8dc', bodyColor:'#c7cabe'
+      }},
+      scales:{
+        x:{ grid:{ color:'#252f1f' }, ticks:{ color:'#5e6856', font:{family:'JetBrains Mono', size:10} } },
+        y:{ grid:{ color:'#252f1f' }, ticks:{ color:'#5e6856', font:{family:'JetBrains Mono', size:10} } }
+      }
+    }
   });
 
-  // update trend chart
-  const now = new Date().toLocaleTimeString('th-TH',{hour12:false, hour:'2-digit', minute:'2-digit'});
-  trendChart.data.labels.push(now);
-  trendChart.data.labels.shift();
-  trendChart.data.datasets[0].data.push(+temp); trendChart.data.datasets[0].data.shift();
-  trendChart.data.datasets[1].data.push(+hum); trendChart.data.datasets[1].data.shift();
-  trendChart.data.datasets[2].data.push(+smoke/10); trendChart.data.datasets[2].data.shift();
-  trendChart.data.datasets[3].data.push(+pm); trendChart.data.datasets[3].data.shift();
-  trendChart.update('none');
+  renderLogs();
 
-  // log entry if not normal
-  if(state !== 'normal'){
-    const timeNow = new Date().toLocaleTimeString('th-TH',{hour12:false});
-    seedLogs.unshift({
-      type: state,
-      title: state==='fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE' : 'เข้าสู่สภาวะเฝ้าระวัง',
-      time: timeNow,
-      detail: `T:${temp}°C  H:${hum}%  Smoke:${smoke}  Prob:${prob.toFixed(2)}`
+  document.getElementById('exportCsvBtn')?.addEventListener('click', ()=>{
+    const rows = [['วันเวลา','สถานะ','รายละเอียด']];
+    seedLogs.forEach(l=>{
+      const stateLabel = l.type==='fire' ? 'ไฟป่า' : l.type==='watch' ? 'เฝ้าระวัง' : 'ปกติ';
+      rows.push([l.time, stateLabel, l.detail.replace(/,/g,' ')]);
     });
-    if(seedLogs.length > 12) seedLogs.pop();
-    renderLogs();
-  }
-});
+    const csvContent = '\uFEFF' + rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `forest-guard-log-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('printBtn')?.addEventListener('click', ()=>{ window.print(); });
+
+  map = L.map('mapHolder', { zoomControl:true, attributionControl:false }).setView([NODE_LAT, NODE_LNG], 13);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:19
+  }).addTo(map);
+
+  nodeMarker = L.marker([NODE_LAT, NODE_LNG], { icon: pinIcon(COLORS.normal, false) }).addTo(map);
+  nodeMarker.bindPopup(`
+    <div class="popup-title">Sender-01 · จุดตรวจวัดหลัก</div>
+    <div class="popup-row">Lat: ${NODE_LAT.toFixed(5)}</div>
+    <div class="popup-row">Lng: ${NODE_LNG.toFixed(5)}</div>
+    <div class="popup-row">สถานะ: ปกติ</div>
+  `);
+
+  applyState(0);
+
+  /* ---------- simulate button (admin only) ---------- */
+  document.getElementById('simBtn')?.addEventListener('click', ()=>{
+    const roll = Math.random();
+    let temp, hum, smoke, pm, prob;
+    if(roll < 0.6){ temp=(24+Math.random()*11).toFixed(1); hum=(45+Math.random()*40).toFixed(1); smoke=Math.round(200+Math.random()*500); pm=(10+Math.random()*40).toFixed(1); prob=Math.random()*0.4; }
+    else if(roll < 0.85){ temp=(36.5+Math.random()*8.4).toFixed(1); hum=(30+Math.random()*15).toFixed(1); smoke=Math.round(1220+Math.random()*750); pm=(60+Math.random()*60).toFixed(1); prob=0.5+Math.random()*0.3; }
+    else { temp=(45.5+Math.random()*14).toFixed(1); hum=(10+Math.random()*20).toFixed(1); smoke=Math.round(2000+Math.random()*2000); pm=(100+Math.random()*150).toFixed(1); prob=0.8+Math.random()*0.2; }
+
+    document.getElementById('valTemp').textContent = temp;
+    document.getElementById('valHum').textContent = hum;
+    document.getElementById('valSmoke').textContent = smoke;
+    document.getElementById('valPM').textContent = pm;
+
+    const state = applyState(prob);
+
+    const jitLat = NODE_LAT + (Math.random()-0.5)*0.0006;
+    const jitLng = NODE_LNG + (Math.random()-0.5)*0.0006;
+    updateMapMarker(state, jitLat, jitLng);
+
+    [['sparkTemp',temp],['sparkHum',hum],['sparkSmoke',smoke/8],['sparkPM',pm]].forEach(([id,val])=>{
+      const ch = sparkCharts[id];
+      ch.data.datasets[0].data.push(+val);
+      ch.data.datasets[0].data.shift();
+      ch.update('none');
+    });
+
+    const now = new Date().toLocaleTimeString('th-TH',{hour12:false, hour:'2-digit', minute:'2-digit'});
+    trendChart.data.labels.push(now);
+    trendChart.data.labels.shift();
+    trendChart.data.datasets[0].data.push(+temp); trendChart.data.datasets[0].data.shift();
+    trendChart.data.datasets[1].data.push(+hum); trendChart.data.datasets[1].data.shift();
+    trendChart.data.datasets[2].data.push(+smoke/10); trendChart.data.datasets[2].data.shift();
+    trendChart.data.datasets[3].data.push(+pm); trendChart.data.datasets[3].data.shift();
+    trendChart.update('none');
+
+    if(state !== 'normal'){
+      const timeNow = new Date().toLocaleTimeString('th-TH',{hour12:false});
+      seedLogs.unshift({
+        type: state,
+        title: state==='fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE (จำลอง)' : 'เข้าสู่สภาวะเฝ้าระวัง (จำลอง)',
+        time: timeNow,
+        detail: `T:${temp}°C  H:${hum}%  Smoke:${smoke}  Prob:${prob.toFixed(2)}`
+      });
+      if(seedLogs.length > 12) seedLogs.pop();
+      renderLogs();
+    }
+  });
+
+  // เริ่มดึงข้อมูลจริง
+  pollLiveData();
+  pollTimerId = setInterval(pollLiveData, POLL_INTERVAL_MS);
+}
 </script>
 </body>
 </html>
