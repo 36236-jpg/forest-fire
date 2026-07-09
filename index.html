@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forest Guard — ระบบแจ้งเตือนไฟป่า</title>
+<title>Forest Guard — ระบบแจ้งเตือนไฟป่าสาธารณะ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -20,485 +20,704 @@
     --ember-dim:#fee2e2;
     --amber:#d97706;
     --amber-dim:#fef3c7;
-    --forest:#16a34a;
-    --forest-dim:#dcfce7;
-    --text-main:#1d291a;
-    /* ✅ ปรับปรุงสีตัวอักษรให้อ่านง่าย คมชัดขึ้น ไม่จมกับพื้นหลังสีอ่อน */
-    --text-muted:#425240; 
+    --moss:#16a34a;
+    --moss-dim:#dcfce7;
+    --text-primary:#16241a;
+    --text-muted:#425240;
     --text-faint:#5c6c58;
-    --radius-lg:12px;
-    --radius-md:8px;
-    --font-sans:'IBM Plex Sans Thai', sans-serif;
-    --font-mono:'JetBrains Mono', monospace;
   }
-  *{margin:0;padding:0;box-sizing:border-box;-webkit-font-smoothing:antialiased;}
-  body{background:var(--bg-void);color:var(--text-main);font-family:var(--font-sans);font-size:14px;line-height:1.5;overflow-x:hidden;}
-  
-  /* ✅ ลดช่องว่าง (padding/margin) ทั่วทั้งหน้าเว็บให้ดูกระชับ ไม่หลวม */
-  .layout{display:grid;grid-template-rows:auto 1fr auto;min-height:100vh;}
-  
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    background:var(--bg-void);
+    color:var(--text-primary);
+    font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;
+    min-height:100vh;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  body{
+    background-image:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(127,166,92,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 0%, rgba(232,100,43,0.06), transparent 60%);
+  }
+
+  /* Main Container */
+  .app{ max-width:1400px; margin:0 auto; padding:14px 18px 36px; display:block; }
+
+  /* ===== TOPBAR ===== */
   .topbar{
-    background:var(--bg-panel);border-bottom:1px solid var(--line);
-    padding:8px 16px;display:flex;justify-content:between;align-items:center;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 4px 14px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:14px;
+    flex-wrap:wrap; gap:14px;
   }
-  .brand-group{display:flex;align-items:center;gap:8px;}
-  .logo-icon{width:28px;height:28px;background:var(--forest-dim);color:var(--forest);border-radius:6px;display:grid;place-items:center;font-weight:700;}
-  .brand-title{font-size:16px;font-weight:600;letter-spacing:-0.02em;}
-  .brand-title span{color:var(--forest);}
-  .sys-status{display:flex;align-items:center;gap:6px;font-size:12px;background:var(--bg-panel-raised);padding:4px 8px;border-radius:20px;border:1px solid var(--line-soft);}
-  .status-dot{width:6px;height:6px;background:var(--forest);border-radius:50%;box-shadow:0 0 8px var(--forest);}
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-text h1{ font-size:17px; font-weight:700; letter-spacing:0.02em; }
+  .brand-text p{ font-size:12px; color:var(--text-muted); margin-top:2px; }
   
-  .auth-btn{background:var(--text-main);color:#fff;border:none;padding:6px 12px;border-radius:var(--radius-md);font-size:13px;font-weight:500;cursor:pointer;}
-  .auth-btn:hover{opacity:0.9;}
-  .user-badge{display:flex;align-items:center;gap:8px;font-size:13px;}
-  .logout-btn{background:none;border:none;color:var(--ember);cursor:pointer;font-size:12px;text-decoration:underline;margin-left:4px;}
+  .topbar-right{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .status-chip{
+    display:flex; align-items:center; gap:8px;
+    font-size:12.5px; color:var(--text-muted);
+    padding:7px 12px; border:1px solid var(--line); border-radius:100px;
+    background:var(--bg-panel);
+  }
+  .dot{ width:7px; height:7px; border-radius:50%; background:var(--moss); flex-shrink:0;
+    box-shadow:0 0 8px var(--moss); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+  .clock{ font-size:13px; color:var(--text-primary); }
 
-  /* ✅ ปรับ Grid หลักให้สัดส่วนยืดหยุ่น กระชับพื้นที่ว่างเปล่าเวลาจอกว้าง */
-  .main-content{
-    padding:12px;display:grid;
-    grid-template-columns: minmax(320px, 360px) minmax(400px, 1fr) minmax(340px, 380px);
-    gap:12px;max-width:1600px;margin:0 auto;width:100%;
+  /* Login / Staff Controls Buttons */
+  .staff-login-btn {
+    font-size:12.5px; font-weight:600; color:var(--text-muted); background:var(--bg-panel); border:1px solid var(--line);
+    padding:8px 16px; border-radius:100px; cursor:pointer; font-family:inherit; transition: all 0.2s ease;
+  }
+  .staff-login-btn:hover { border-color:var(--text-faint); color:var(--text-primary); background:var(--bg-panel-raised); }
+  
+  .role-badge{
+    font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:100px; letter-spacing:0.03em;
+  }
+  .role-badge.admin{ background:rgba(245,158,11,0.14); color:var(--amber); border:1px solid rgba(245,158,11,0.35); }
+  .logout-btn{
+    font-size:12px; color:var(--ember); background:var(--ember-dim); border:1px solid rgba(239,68,68,0.3);
+    padding:7px 12px; border-radius:100px; cursor:pointer; font-family:inherit;
+  }
+  .logout-btn:hover{ background:var(--ember); color:#fff; }
+
+  /* ===== 2026 MASTER GRID (25% : 50% : 25%) ===== */
+  .grid{
+    display:grid;
+    grid-template-columns: 25% 50% 25%;
+    gap:16px;
+    align-items:start;
   }
 
-  .panel{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:12px;}
-  .panel-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;color:var(--text-main);border-bottom:1px solid var(--line-soft);padding-bottom:6px;}
-  
-  /* Left Column - Gauges */
-  .gauge-container{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 0;position:relative;}
-  .gauge-meta{text-align:center;margin-top:-10px;}
-  .gauge-value{font-family:var(--font-mono);font-size:32px;font-weight:700;line-height:1;}
-  .gauge-label{font-size:12px;color:var(--text-muted);margin-top:2px;}
-  .state-banner{text-align:center;padding:8px;border-radius:var(--radius-md);font-weight:600;font-size:13px;}
-  .state-normal{background:var(--forest-dim);color:var(--forest);}
-  .state-warn{background:var(--amber-dim);color:var(--amber);}
-  .state-fire{background:var(--ember-dim);color:var(--ember);animation:pulse 1.5s infinite;}
-  @keyframes pulse{0%{opacity:1;}50%{opacity:0.6;}100%{opacity:1;}}
-
-  /* ✅ Center Column - ปรับช่องเซนเซอร์ 4 ช่อง เป็น 2 คอลัมน์ ช่วยให้ความสูงสมดุล */
-  .sensor-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:8px;}
-  .sensor-card{background:var(--bg-panel-raised);border:1px solid var(--line-soft);border-radius:var(--radius-md);padding:8px 12px;display:flex;flex-direction:column;gap:4px;}
-  .card-top{display:flex;justify-content:between;align-items:center;color:var(--text-muted);font-size:12px;}
-  .card-body{display:flex;align-items:baseline;gap:4px;}
-  .card-val{font-family:var(--font-mono);font-size:22px;font-weight:700;}
-  .card-unit{font-size:11px;color:var(--text-faint);}
-  .spark-box{height:24px;margin-top:4px;}
-
-  /* ✅ ปรับลดความสูงของแผนที่ลงเล็กน้อยเพื่อให้เข้ากับสัดส่วนพาเนลข้าง ๆ */
-  #map{height:260px;border-radius:var(--radius-md);border:1px solid var(--line);z-index:1;}
-  
-  /* ✅ แก้ไขข้อผิดพลาดสีข้อความจมในกล่องคำอธิบายแผนที่ (risk-legend) */
-  .risk-legend{
-    background:rgba(29,41,26,0.95) !important; /* พื้นหลังมืดเข้ม */
-    border:1px solid #37402e !important;
-    padding:8px !important;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.15);
-    color:#ffffff !important; /* เปลี่ยนข้อความหลักเป็นสีขาว */
+  .panel{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
   }
-  .risk-legend h4{font-size:11px;margin-bottom:4px;color:#e8f0e2 !important;font-weight:600;}
-  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;margin-top:3px;color:#dbe6d3 !important;}
-  .legend-color{width:10px;height:10px;border-radius:50%;display:inline-block;}
-
-  /* Right Column - Logs */
-  .log-container{flex:1;overflow-y:auto;max-height:460px;display:flex;flex-direction:column;gap:6px;padding-right:2px;}
-  .log-container::-webkit-scrollbar{width:4px;}
-  .log-container::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px;}
-  .log-item{padding:8px;border-radius:var(--radius-md);border-left:3px solid var(--line);background:var(--bg-panel-raised);font-size:12px;display:flex;flex-direction:column;gap:2px;}
-  .log-item.fire{border-left-color:var(--ember);background:#fff5f5;}
-  .log-item.warn{border-left-color:var(--amber);background:#fffbeb;}
-  .log-header{display:flex;justify-content:between;color:var(--text-faint);font-size:11px;}
-  .log-title{font-weight:500;color:var(--text-main);}
-
-  .footer{background:var(--bg-panel);border-top:1px solid var(--line);padding:6px;text-align:center;font-size:11px;color:var(--text-faint);}
-
-  /* Auth Modal */
-  .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);z-index:1000;place-items:center;padding:16px;}
-  .modal-content{background:var(--bg-panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px;width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;position:relative;}
-  .modal-close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-faint);}
-  .form-group{display:flex;flex-direction:column;gap:4px;}
-  .form-group label{font-size:12px;font-weight:500;color:var(--text-muted);}
-  .form-group input{background:var(--bg-panel-raised);border:1px solid var(--line);padding:8px;border-radius:var(--radius-md);font-family:inherit;font-size:13px;color:var(--text-main);outline:none;}
-  .form-group input:focus{border-color:var(--forest);}
-  
-  /* ✅ ส่วนของการล็อกอิน: จัดโครงสร้างฟิลด์รหัสผ่านและปุ่มดวงตาสำหรับเปิด-ปิดดูรหัส */
-  .password-wrapper{position:relative;display:flex;align-items:center;}
-  .password-wrapper input{width:100%;padding-right:32px;}
-  .eye-btn{
-    position:absolute;right:8px;background:none;border:none;
-    color:var(--text-faint);cursor:pointer;display:grid;place-items:center;
-    padding:4px;user-select:none;font-size:14px;
+  .panel-label{
+    font-size:11px; text-transform:uppercase; letter-spacing:0.12em;
+    color:var(--text-faint); font-weight:600; margin-bottom:10px;
   }
-  .eye-btn:hover{color:var(--text-main);}
 
-  .submit-btn{background:var(--forest);color:#fff;border:none;padding:8px;border-radius:var(--radius-md);font-weight:500;cursor:pointer;margin-top:4px;}
-  .error-msg{color:var(--ember);font-size:11px;text-align:center;display:none;}
+  /* Column 1: Left Side */
+  .col-left { display: flex; flex-direction: column; gap: 16px; }
+  .gauge-panel{ text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .gauge-wrap{ position:relative; width:100%; max-width:220px; aspect-ratio:1/1; margin:2px 0; }
+  #gaugeCanvas{ width:100%; height:100%; display:block; }
+  .gauge-readout{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .gauge-pct{ font-family:'JetBrains Mono',monospace; font-size:40px; font-weight:700; line-height:1; }
+  .gauge-pct-label{ font-size:11px; color:var(--text-muted); letter-spacing:0.1em; margin-top:6px; text-transform:uppercase;}
+  
+  .status-pill{
+    margin-top:10px; padding:8px 18px; border-radius:100px;
+    font-size:13.5px; font-weight:600; display:inline-flex; align-items:center; gap:8px;
+  }
+  .status-pill .ring{ width:8px; height:8px; border-radius:50%; }
 
-  @media(max-width:1024px){
-    .main-content{grid-template-columns:1fr;gap:12px;}
-    .log-container{max-height:250px;}
+  .state-normal .status-pill{ background:rgba(34,197,94,0.14); color:var(--moss); border:1px solid rgba(34,197,94,0.3);}
+  .state-normal .status-pill .ring{ background:var(--moss); }
+  .state-watch .status-pill{ background:rgba(245,158,11,0.14); color:var(--amber); border:1px solid rgba(245,158,11,0.35);}
+  .state-watch .status-pill .ring{ background:var(--amber); }
+  .state-fire .status-pill{ background:rgba(239,68,68,0.16); color:var(--ember); border:1px solid rgba(239,68,68,0.4);}
+  .state-fire .status-pill .ring{ background:var(--ember); }
+
+  .sensor-grid{ display:grid; grid-template-columns:1fr; gap:10px; width: 100%; }
+  .sensor-card{
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:14px;
+    padding:12px 14px; display:flex; flex-direction:column; gap:4px;
+  }
+  .sensor-head{ display:flex; align-items:center; gap:7px; }
+  .sensor-name{ font-size:12px; color:var(--text-muted); font-weight:500;}
+  .sensor-icon{ font-size:15px; }
+  .sensor-value{ font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700;}
+  .sensor-unit{ font-size:12px; color:var(--text-faint); margin-left:3px; font-weight:400;}
+  .sensor-status-tag { font-size:11px; font-weight:500; margin-top:2px; }
+
+  /* Column 2: Center (Main Map & Chart) */
+  .col-center { display: flex; flex-direction: column; gap: 16px; }
+  .map-holder{ height:500px; border-radius:10px; overflow:hidden; border:1px solid var(--line); position:relative; }
+  .leaflet-container{ background:#e5e3df !important; font-family:'IBM Plex Sans Thai',sans-serif; }
+  .chart-holder{ height:230px; margin-top:8px; }
+
+  /* Column 3: Right Side (Log List) */
+  .col-right { display: flex; flex-direction: column; gap: 16px; }
+  .log-panel{ display:flex; flex-direction:column; }
+  .log-list{ display:flex; flex-direction:column; max-height:550px; overflow-y:auto; }
+  .log-item{ padding:10px 2px; border-bottom:1px solid var(--line-soft); display:flex; gap:11px; }
+  .log-item:last-child{ border-bottom:none; }
+  .log-marker{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
+  .log-marker.fire{ background:var(--ember); box-shadow:0 0 7px var(--ember);}
+  .log-marker.watch{ background:var(--amber); }
+  .log-marker.normal{ background:var(--moss); }
+  .log-body{ flex:1; }
+  .log-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
+  .log-title{ font-size:13px; font-weight:600; }
+  .log-time{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint); }
+  .log-detail{ font-size:11.5px; color:var(--text-muted); margin-top:3px; font-family:'JetBrains Mono',monospace; }
+
+  /* Admin Control Panel Section */
+  .admin-only { display: none !important; }
+  body.role-admin .admin-only { display: block !important; }
+  body.role-admin .admin-only-flex { display: flex !important; }
+  
+  .sim-btn{
+    margin-top:8px; width:100%; padding:12px; border-radius:10px; border:1px solid var(--line);
+    background:var(--bg-panel-raised); color:var(--text-primary); font-family:inherit;
+    font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s ease;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .sim-btn:hover{ background:var(--line); border-color:var(--text-faint); }
+
+  /* ===== MODAL POPUP LOGIN ===== */
+  .login-modal {
+    position: fixed; inset: 0; z-index: 3000;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(22, 36, 26, 0.6); backdrop-filter: blur(4px); padding: 20px;
+  }
+  .login-modal.open { display: flex; }
+  .login-card{
+    width:100%; max-width:380px; background:var(--bg-panel); border:1px solid var(--line); border-radius:16px;
+    padding:24px 22px 20px; box-shadow:0 20px 50px rgba(22,36,26,0.25); position: relative;
+  }
+  .login-card-close {
+    position: absolute; top: 14px; right: 16px; font-size: 20px; background: none; border: none;
+    color: var(--text-faint); cursor: pointer;
+  }
+  .login-brand { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+  .login-brand h1{ font-size:16.5px; font-weight:700; }
+  .login-form { display:flex; flex-direction:column; gap:12px; }
+  .login-field label{ display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:6px; }
+  .login-field input{
+    width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--line);
+    background:var(--bg-panel-raised); color:var(--text-primary); font-family:inherit; font-size:13.5px; outline:none;
+  }
+  .login-field input:focus{ border-color:var(--moss); }
+  .login-btn{
+    margin-top:6px; width:100%; padding:12px; border-radius:9px; border:none;
+    background:linear-gradient(135deg, var(--moss), #3a7a2e); color:#ffffff;
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .login-error{
+    display:none; font-size:12px; color:var(--ember); background:rgba(239,68,68,0.1);
+    border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:9px 11px; margin-top:2px;
+  }
+  .login-error.visible{ display:block; }
+
+  /* Shake Animation */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+  }
+  .shake-effect { animation: shake 0.4s ease-in-out; }
+
+  /* ===== EMERGENCY BANNER ===== */
+  .fire-banner{
+    display:none; align-items:center; justify-content:space-between; gap:14px;
+    background:linear-gradient(120deg, #7f1d1d, #b91c1c); border:1px solid rgba(255,255,255,0.15);
+    border-radius:14px; padding:12px 18px; margin-bottom:14px;
+    box-shadow:0 8px 24px rgba(185,28,28,0.35);
+  }
+  .fire-banner.active{ display:flex; animation:bannerPulse 1.8s ease-in-out infinite; }
+  @keyframes bannerPulse{ 0%,100%{ box-shadow:0 8px 24px rgba(185,28,28,0.35);} 50%{ box-shadow:0 8px 34px rgba(239,68,68,0.6);} }
+  .fire-banner-text{ display:flex; align-items:center; gap:12px; color: #fff; }
+  .fire-banner-icon{ font-size:26px; }
+  .fire-banner-title{ font-size:15px; font-weight:700; }
+  .fire-banner-sub{ font-size:12px; color:rgba(255,255,255,0.8); margin-top:2px; }
+  .fire-banner-btn{
+    display:inline-flex; align-items:center; gap:7px; background:#fff; color:#7f1d1d; font-weight:700; font-size:13px;
+    padding:9px 16px; border-radius:100px; border:none; cursor:pointer; white-space:nowrap;
+  }
+
+  /* ===== BOTTOM EMERGENCY SECTION ===== */
+  .bottom-row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:14px; }
+  .contact-list{ display:flex; flex-direction:column; gap:8px; }
+  .contact-card{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px; padding:10px 12px;
+  }
+  .contact-info{ flex:1; min-width:0; }
+  .contact-name{ font-size:13px; font-weight:600; }
+  .contact-number{ font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text-muted); margin-top:2px; }
+  .call-btn{
+    display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,0.14); color:var(--moss);
+    border:1px solid rgba(34,197,94,0.3); font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:100px;
+    text-decoration:none; transition:background 0.15s ease; min-height: 44px;
+  }
+  .call-btn:hover{ background:rgba(34,197,94,0.24); }
+
+  .footer-note{ text-align:center; font-size:11.5px; color:var(--text-faint); margin-top:16px; line-height:1.7; }
+
+  /* ===== MOBILE RESPONSIVE (1-2-3-4 Flow) ===== */
+  @media (max-width: 1100px){
+    .grid{ grid-template-columns: 1fr; }
+    .col-left { order: 1; }
+    .col-center { order: 2; }
+    .col-right { order: 3; }
+    .bottom-row { grid-template-columns: 1fr; order: 4; }
+  }
+  @media (max-width: 640px){
+    .app{ padding:14px 12px 40px; }
+    .topbar-right{ gap:10px; width:100%; justify-content:space-between; }
+    .map-holder{ height:350px; }
+    .sim-btn, .login-btn, .fire-banner-btn, .staff-login-btn, .logout-btn { min-height: 44px; }
   }
 </style>
 </head>
-<body>
+<body class="state-normal">
 
-<div class="layout">
-  <header class="topbar">
-    <div class="brand-group">
-      <div class="logo-icon">F</div>
-      <h1 class="brand-title">Forest<span>Guard</span></h1>
-      <div class="sys-status"><div class="status-dot"></div><span>ระบบปฎิบัติการปกติ</span></div>
-    </div>
-    <div id="authArea">
-      <button class="auth-btn" onclick="openModal()">เจ้าหน้าที่เข้าสู่ระบบ</button>
-    </div>
-  </header>
-
-  <main class="main-content">
-    <section class="panel">
-      <h2 class="panel-title">🛡️ ดัชนีความเสี่ยง AI</h2>
-      <div class="gauge-container">
-        <canvas id="gaugeChart" width="200" height="120"></canvas>
-        <div class="gauge-meta">
-          <div class="gauge-value" id="aiVal">0.0%</div>
-          <div class="gauge-label">ความน่าจะเป็นในการเกิดไฟป่า</div>
-        </div>
+<div class="app">
+  <!-- Emergency Active Siren Banner -->
+  <div class="fire-banner" id="emergencyBanner">
+    <div class="fire-banner-text">
+      <span class="fire-banner-icon">🔥</span>
+      <div>
+        <div class="fire-banner-title">[🔥 วิกฤต] ตรวจพบระดับดัชนีความเสี่ยงไฟป่าสูงเกินเกณฑ์กำหนด!</div>
+        <div class="fire-banner-sub">ระบบเปิดสัญญาณเสียงไซเรนเตือนภัยพื้นที่เฝ้าระวังโปรดเตรียมพร้อมรับมือ</div>
       </div>
-      <div id="stateBanner" class="state-banner state-normal">สภาวะแวดล้อม: ปกติ</div>
-    </section>
+    </div>
+    <button class="fire-banner-btn" onclick="muteSiren()">🔕 ปิดเสียงเตือนภัย</button>
+  </div>
 
-    <section class="panel">
-      <h2 class="panel-title">📍 พิกัดสถานีเฝ้าระวัง (LoRa Node)</h2>
-      <div id="map"></div>
-      
-      <h2 class="panel-title">📊 ค่าตรวจวัดจากอุปกรณ์ตรวจจับ</h2>
-      <div class="sensor-grid">
-        <div class="sensor-card">
-          <div class="card-top"><span>อุณหภูมิ</span><span>Temp</span></div>
-          <div class="card-body"><span class="card-val" id="cardTemp">--.-</span><span class="card-unit">°C</span></div>
-          <div class="spark-box"><canvas id="sparkTemp"></canvas></div>
-        </div>
-        <div class="sensor-card">
-          <div class="card-top"><span>ความชื้นสัมพัทธ์</span><span>Hum</span></div>
-          <div class="card-body"><span class="card-val" id="cardHum">--.-</span><span class="card-unit">%</span></div>
-          <div class="spark-box"><canvas id="sparkHum"></canvas></div>
-        </div>
-        <div class="sensor-card">
-          <div class="card-top"><span>ปริมาณกลุ่มควัน</span><span>Smoke</span></div>
-          <div class="card-body"><span class="card-val" id="cardSmoke">---</span><span class="card-unit">Raw</span></div>
-          <div class="spark-box"><canvas id="sparkSmoke"></canvas></div>
-        </div>
-        <div class="sensor-card">
-          <div class="card-top"><span>ฝุ่นละออง PM2.5</span><span>PM2.5</span></div>
-          <div class="card-body"><span class="card-val" id="cardPM">--.-</span><span class="card-unit">µg/m³</span></div>
-          <div class="spark-box"><canvas id="sparkPM"></canvas></div>
-        </div>
+  <!-- Top Navigation Bar -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-text">
+        <h1>FOREST GUARD</h1>
+        <p>ระบบติดตามตรวจสอบและควบคุมดัชนีไฟป่าอัจฉริยะ 2026</p>
       </div>
-    </section>
-
-    <section class="panel">
-      <h2 class="panel-title">📈 กราฟแนวโน้มพารามิเตอร์ (เรียลไทม์)</h2>
-      <div style="position:relative; height:140px; width:100%;">
-        <canvas id="trendChart"></canvas>
+    </div>
+    <div class="topbar-right">
+      <div class="status-chip">
+        <div class="dot"></div>
+        <span class="clock" id="liveClock">00:00:00</span>
       </div>
       
-      <h2 class="panel-title">📋 บันทึกเหตุการณ์และแจ้งเตือนภัย</h2>
-      <div class="log-container" id="logBox">
-        <div class="log-item" style="border-left-color:var(--line);text-align:center;color:var(--text-faint);padding:16px;">
-          ยังไม่มีข้อมูลบันทึกส่งเข้ามาในระบบ
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    © 2026 Forest Guard Project — ระบบรักษาความปลอดภัยและแจ้งเตือนภัยพิบัติอัจฉริยะด้วยเครือข่าย LoRa
-  </footer>
-</div>
-
-<div class="modal" id="loginModal">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeModal()">×</button>
-    <h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">เจ้าหน้าที่เข้าสู่ระบบ</h3>
-    <div class="error-msg" id="loginError">รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง</div>
-    <div class="form-group">
-      <label>รหัสผ่านปฏิบัติการ</label>
-      <div class="password-wrapper">
-        <input type="password" id="passInput" placeholder="กรอกรหัสผ่านเพื่อยืนยันตน">
-        <button class="eye-btn" id="togglePasswordBtn" onclick="togglePasswordVisibility()">👁️</button>
+      <!-- Public vs Admin Authentication Interface -->
+      <div id="authInterface">
+        <button class="staff-login-btn" onclick="toggleLoginModal(true)">🔑 สำหรับเจ้าหน้าที่ (Staff Login)</button>
       </div>
     </div>
-    <button class="submit-btn" onclick="submitAuth()">ยืนยันเข้าสู่ระบบ</button>
+  </div>
+
+  <!-- Master UI Grid Design Layout -->
+  <div class="grid">
+    
+    <!-- [ลำดับที่ 1]: Left Panel - Risk Gauges & Real-time Sensors -->
+    <div class="col-left">
+      <div class="panel gauge-panel">
+        <div class="panel-label">ดัชนีความเสี่ยงในพื้นที่</div>
+        <div class="gauge-wrap">
+          <canvas id="gaugeCanvas" width="220" height="220"></canvas>
+          <div class="gauge-readout">
+            <span class="gauge-pct" id="gaugePctText">34%</span>
+            <span class="gauge-pct-label">Risk Index</span>
+          </div>
+        </div>
+        <div id="statusPillContainer">
+          <div class="status-pill"><div class="ring"></div><span id="statusLabel">[🟢 ปกติ] สภาวะสมดุล</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">ค่าตรวจวัดจากเซนเซอร์ภาคสนาม</div>
+        <div class="sensor-grid">
+          <div class="sensor-card">
+            <div class="sensor-head">
+              <span class="sensor-icon">🌡️</span>
+              <span class="sensor-name">อุณหภูมิอากาศ</span>
+            </div>
+            <div class="sensor-value"><span id="valTemp">28.5</span><span class="sensor-unit">°C</span></div>
+            <div class="sensor-status-tag" id="tagTemp" style="color: var(--moss);">[🟢 ปกติ]</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sensor-head">
+              <span class="sensor-icon">💧</span>
+              <span class="sensor-name">ความชื้นสัมพัทธ์</span>
+            </div>
+            <div class="sensor-value"><span id="valHumid">62</span><span class="sensor-unit">% RH</span></div>
+            <div class="sensor-status-tag" id="tagHumid" style="color: var(--moss);">[🟢 ปกติ]</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sensor-head">
+              <span class="sensor-icon">💨</span>
+              <span class="sensor-name">ความเร็วลม</span>
+            </div>
+            <div class="sensor-value"><span id="valWind">12.4</span><span class="sensor-unit">km/h</span></div>
+            <div class="sensor-status-tag" id="tagWind" style="color: var(--moss);">[🟢 ปกติ]</div>
+          </div>
+          <div class="sensor-card">
+            <div class="sensor-head">
+              <span class="sensor-icon">🌫️</span>
+              <span class="sensor-name">ความหนาแน่นกลุ่มควัน</span>
+            </div>
+            <div class="sensor-value"><span id="valSmoke">18</span><span class="sensor-unit">ppm</span></div>
+            <div class="sensor-status-tag" id="tagSmoke" style="color: var(--moss);">[🟢 ปกติ]</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- [ลำดับที่ 2]: Center Panel - GIS Map & Analytics History -->
+    <div class="col-center">
+      <div class="panel" style="padding:10px;">
+        <div class="map-holder" id="map"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">กราฟวิเคราะห์แนวโน้มสถานการณ์รายชั่วโมง</div>
+        <div class="chart-holder">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- [ลำดับที่ 3]: Right Panel - Real-time Incident Log Logs -->
+    <div class="col-right">
+      <div class="panel log-panel">
+        <div class="panel-label">ประวัติรายงานเหตุการณ์สถานี</div>
+        <div class="log-list" id="logContainer">
+          <!-- Dynamic Log Inserted Here -->
+        </div>
+      </div>
+      
+      <!-- Hidden Admin Controls Simulation Panel Section -->
+      <div class="panel admin-only">
+        <div class="panel-label" style="color:var(--amber);">🛡️ แผงจำลองสถานการณ์สำหรับเจ้าหน้าที่</div>
+        <button class="sim-btn" onclick="simulateState('normal')">🟢 จำลองสถานการณ์ปกติ (34%)</button>
+        <button class="sim-btn" onclick="simulateState('watch')">⚠️ จำลองสถานการณ์เฝ้าระวัง (62%)</button>
+        <button class="sim-btn" onclick="simulateState('fire')">🔥 จำลองสถานการณ์วิกฤต (88%)</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- [ลำดับที่ 4]: Footer & Contact Emergency Lines -->
+  <div class="bottom-row">
+    <div class="panel">
+      <div class="panel-label">สายด่วนรับแจ้งเหตุอุทกภัยทางธรรมชาติ</div>
+      <div class="contact-list">
+        <div class="contact-card">
+          <div class="contact-info">
+            <div class="contact-name">ศูนย์เฮลิคอปเตอร์บรรเทาสาธารณภัย</div>
+            <div class="contact-number">โทร. 1784 (ตลอด 24 ชั่วโมง)</div>
+          </div>
+          <a href="tel:1784" class="call-btn">📞 โทรออก</a>
+        </div>
+        <div class="contact-card">
+          <div class="contact-info">
+            <div class="contact-name">สายด่วนพิทักษ์ป่าไม้และไฟป่าแห่งชาติ</div>
+            <div class="contact-number">โทร. 1362 (สายตรงฉุกเฉิน)</div>
+          </div>
+          <a href="tel:1362" class="call-btn">📞 โทรออก</a>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="display:flex; flex-direction:column; justify-content:center; text-align:center;">
+      <p class="footer-note">ข้อมูลระบบสาธารณะอัปเดตอัตโนมัติผ่านเครือข่ายสถานีฐานดาวเทียมลูปปิด<br><b>สิทธิ์การจำลองข้อมูลและการแก้ไขพิกัดสงวนไว้สำหรับเจ้าหน้าที่ระดับสูงเท่านั้น</b></p>
+    </div>
   </div>
 </div>
 
+<!-- ================= STAFF SECURITY LOGIN MODAL POPUP ================= -->
+<div class="login-modal" id="loginModal">
+  <div class="login-card" id="loginCard">
+    <button class="login-card-close" onclick="toggleLoginModal(false)">✕</button>
+    <div class="login-brand">
+      <div>
+        <h1>เจ้าหน้าที่ยืนยันสิทธิ์รักษาความปลอดภัย</h1>
+        <p>กรุณากรอกข้อมูลเพื่อเปิดใช้งานเครื่องมือควบคุม</p>
+      </div>
+    </div>
+    <div class="login-form">
+      <div class="login-field">
+        <label>ที่อยู่อีเมลเจ้าหน้าที่ (Staff Email)</label>
+        <input type="email" id="txtEmail" placeholder="username@pcschool.ac.th" autocomplete="off">
+      </div>
+      <div class="login-field">
+        <label>รหัสผ่านรักษาความปลอดภัย (Password)</label>
+        <input type="password" id="txtPassword" placeholder="••••">
+      </div>
+      <div class="login-error" id="loginErrorBox">❌ ข้อมูลไม่ถูกต้อง สิทธิ์การเข้าถึงถูกปฏิเสธ</div>
+      <button class="login-btn" onclick="executeStaffLogin()">🔐 ยืนยันเข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript Core Logic Processing -->
 <script>
-  // ระบบจัดการสิทธิ์การเข้าใช้งาน
-  let isAdmin = false;
-  function openModal(){ document.getElementById('loginModal').style.display='grid'; }
-  function closeModal(){
-    document.getElementById('loginModal').style.display='none';
-    document.getElementById('loginError').style.display='none';
-    document.getElementById('passInput').value='';
-  }
-  
-  // ✅ ฟังก์ชันปุ่มดวงตาเปิดปิดสลับประเภทของรหัสผ่าน
-  function togglePasswordVisibility() {
-    const passInput = document.getElementById('passInput');
-    const eyeBtn = document.getElementById('togglePasswordBtn');
-    if (passInput.type === 'password') {
-      passInput.type = 'text';
-      eyeBtn.innerText = '🙈';
-    } else {
-      passInput.type = 'password';
-      eyeBtn.innerText = '👁️';
-    }
-  }
+  let map, mainChart;
+  let audioCtx = null;
+  let sirenOsc = null;
+  let sirenInterval = null;
 
-  function submitAuth(){
-    const pin = document.getElementById('passInput').value;
-    if(pin === '1234'){
-      isAdmin = true;
-      closeModal();
-      renderAuthArea();
-    }else{
-      document.getElementById('loginError').style.display='block';
-    }
-  }
-  function triggerLogout(){
-    isAdmin = false;
-    renderAuthArea();
-  }
-  function renderAuthArea(){
-    const container = document.getElementById('authArea');
-    if(isAdmin){
-      container.innerHTML = `
-        <div class="user-badge">
-          <span>🟢 <b>เจ้าหน้าที่ควบคุม</b></span>
-          <button class="logout-btn" onclick="triggerLogout()">ออกจากระบบ</button>
-        </div>
-      `;
-    }else{
-      container.innerHTML = `<button class="auth-btn" onclick="openModal()">เจ้าหน้าที่เข้าสู่ระบบ</button>`;
-    }
-  }
+  // Real-time Clock Counter
+  setInterval(() => {
+    const d = new Date();
+    document.getElementById('liveClock').innerText = d.toTimeString().split(' ')[0];
+  }, 1000);
 
-  // แผนที่ Leaflet มาร์กเกอร์พิกัดศูนย์กลางโรงเรียนปากช่อง
-  const map = L.map('map', {zoomControl: false}).setView([14.7196, 101.4371], 15);
-  L.control.zoom({position: 'bottomright'}).addTo(map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-  const customMarkerIcon = L.divIcon({
-    className: 'custom-radar-marker',
-    html: `<div style="position:relative;"><div style="width:14px;height:14px;background:#16a34a;border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px rgba(0,0,0,0.3);"></div></div>`,
-    iconSize: [14, 14], iconAnchor: [7, 7]
+  // Initialize System Component Dashboard Map & Charts
+  window.addEventListener('DOMContentLoaded', () => {
+    initLeafletMap();
+    initAnalyticsChart();
+    drawGauge(34, 'normal');
+    renderLogs();
   });
-  const mapMarker = L.marker([14.7196, 101.4371], {icon: customMarkerIcon}).addTo(map);
 
-  // สร้างกลุ่มกล่องข้อมูล Risk-Legend อธิบายระดับความเข้มสีบนแผ่นที่ฐานข้อมูล
-  const legend = L.control({position: 'topright'});
-  legend.onAdd = function() {
-    const div = L.DomUtil.create('div', 'risk-legend');
-    div.innerHTML = `
-      <h4>ระดับดัชนีเสี่ยงภัย</h4>
-      <div class="legend-item"><span class="legend-color" style="background:#16a34a"></span>ปกติ (ต่ำกว่า 50%)</div>
-      <div class="legend-item"><span class="legend-color" style="background:#d97706"></span>เฝ้าระวัง (50-95%)</div>
-      <div class="legend-item"><span class="legend-color" style="background:#dc2626"></span>วิกฤตไฟป่า (95%+)</div>
-    `;
-    return div;
-  };
-  legend.addTo(map);
+  function initLeafletMap() {
+    map = L.map('map', { attributionControl: false }).setView([18.7883, 98.9853], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    
+    // Default Map Pin Points
+    updateMapMarker(18.7883, 98.9853, "[🟢 ปกติ] ดอยสุเทพ สถานการณ์ทั่วไปปกติ", 'normal');
+  }
 
-  function updateMapMarker(state, lat, lng){
-    let color = '#16a34a';
-    if(state === 'warn') color = '#d97706';
-    if(state === 'fire') color = '#dc2626';
-    mapMarker.setLatLng([lat, lng]);
-    mapMarker.setIcon(L.divIcon({
-      className: 'custom-radar-marker',
-      html: `<div style="position:relative;"><div style="width:14px;height:14px;background:${color};border:2px solid #fff;border-radius:50%;box-shadow:0 0 8px ${color};"></div></div>`,
-      iconSize: [14, 14], iconAnchor: [7, 7]
-    }));
+  function updateMapMarker(lat, lng, desc, status) {
+    map.eachLayer((layer) => { if (layer instanceof L.Marker) map.removeLayer(layer); });
+    let color = status === 'fire' ? '#dc2626' : (status === 'watch' ? '#d97706' : '#16a34a');
+    let customIcon = L.divIcon({
+      className: 'custom-pin',
+      html: `<div style="background-color:${color}; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px ${color};"></div>`
+    });
+    L.marker([lat, lng], { icon: customIcon }).addTo(map).bindPopup(`<div class="popup-title">รายงานจากพิกัดตรวจวัด</div><div class="popup-row">${desc}</div>`).openPopup();
     map.panTo([lat, lng]);
   }
 
-  // สร้าง Chart เรขาคณิตครึ่งวงกลมเข็มเกจ์บอกระดับความมั่นใจ AI
-  const gaugeCtx = document.getElementById('gaugeChart').getContext('2d');
-  const gaugeChart = new Chart(gaugeCtx, {
-    type: 'doughnut',
-    data: {
-      datasets: [{
-        data: [0, 100],
-        backgroundColor: ['#16a34a', '#e8f0e2'],
-        borderWidth: 0, circumference: 180, rotation: 270, cutout: '82%'
-      }]
-    },
-    options: { responsive: false, plugins: { legend: { display: false }, tooltip: { enabled: false } } }
-  });
+  function initAnalyticsChart() {
+    const ctx = document.getElementById('trendChart').getContext('2d');
+    mainChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
+        datasets: [{
+          label: 'ดัชนีชี้วัดความเสี่ยงไฟป่า (%)',
+          data: [30, 32, 35, 34, 33, 34],
+          borderColor: '#16a34a',
+          backgroundColor: 'rgba(22, 163, 74, 0.05)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+  }
 
-  function setGaugeValue(prob) {
-    const pct = Math.min(Math.max(prob * 100, 0), 100);
-    document.getElementById('aiVal').innerText = pct.toFixed(1) + '%';
+  // HTML5 Circular Gauge Rendering Component
+  function drawGauge(pct, state) {
+    const canvas = document.getElementById('gaugeCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     let color = '#16a34a';
-    let label = 'สภาวะแวดล้อม: ปกติ';
-    let bannerClass = 'state-banner state-normal';
-    let state = 'normal';
+    if(state === 'watch') color = '#d97706';
+    if(state === 'fire') color = '#dc2626';
 
-    if(pct >= 50 && pct < 95){
-      color = '#d97706'; label = '⚠️ เฝ้าระวัง: สภาพอากาศมีความเสี่ยง'; bannerClass = 'state-banner state-warn'; state = 'warn';
-    } else if(pct >= 95){
-      color = '#dc2626'; label = '🚨 วิกฤต: ตรวจพบสภาวะไฟป่าในพื้นที่'; bannerClass = 'state-banner state-fire'; state = 'fire';
-    }
+    document.getElementById('gaugePctText').innerText = pct + '%';
+    document.getElementById('gaugePctText').style.color = color;
 
-    gaugeChart.data.datasets[0].data = [pct, 100 - pct];
-    gaugeChart.data.datasets[0].backgroundColor = [color, '#e8f0e2'];
-    gaugeChart.update();
+    // Track Bar Base Line Background Circle
+    ctx.beginPath();
+    ctx.arc(110, 110, 90, 0.75 * Math.PI, 2.25 * Math.PI);
+    ctx.strokeStyle = '#e8f0e2';
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.stroke();
 
-    const banner = document.getElementById('stateBanner');
-    banner.innerText = label;
-    banner.className = bannerClass;
-    return state;
+    // Active Highlight Progress Value Arc
+    let endAngle = 0.75 * Math.PI + (pct / 100) * 1.5 * Math.PI;
+    ctx.beginPath();
+    ctx.arc(110, 110, 90, 0.75 * Math.PI, endAngle);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 14;
+    ctx.lineCap = 'round';
+    ctx.stroke();
   }
 
-  // โครงสร้างประวัติและแถบ Sparkline ขนาดเล็กย่อส่วนภายในการ์ดเซนเซอร์
-  const sparkOptions = {
-    responsive: true, maintainAspectRatio: false,
-    scales: { x: { display: false }, y: { display: false } },
-    plugins: { legend: { display: false }, tooltip: { enabled: false } },
-    elements: { line: { tension: 0.3, borderWidth: 1.5 }, point: { radius: 0 } }
-  };
-
-  function makeSpark(id, color) {
-    return new Chart(document.getElementById(id).getContext('2d'), {
-      type: 'line',
-      data: { labels: Array(10).fill(''), datasets: [{ data: Array(10).fill(0), borderColor: color }] },
-      options: sparkOptions
-    });
-  }
-  const sparkCharts = {
-    sparkTemp: makeSpark('sparkTemp', '#16a34a'),
-    sparkHum: makeSpark('sparkHum', '#0284c7'),
-    sparkSmoke: makeSpark('sparkSmoke', '#d97706'),
-    sparkPM: makeSpark('sparkPM', '#dc2626')
-  };
-
-  // แผนภาพเส้นพยากรณ์รวมแนวโน้มพารามิเตอร์ 4 ชุดหลัก
-  const trendCtx = document.getElementById('trendChart').getContext('2d');
-  const trendChart = new Chart(trendCtx, {
-    type: 'line',
-    data: {
-      labels: Array(8).fill('--:--'),
-      datasets: [
-        { label: 'อุณหภูมิ (°C)', data: Array(8).fill(0), borderColor: '#16a34a', borderWidth: 2, pointRadius: 2, tension: 0.2 },
-        { label: 'ความชื้น (%)', data: Array(8).fill(0), borderColor: '#0284c7', borderWidth: 2, pointRadius: 2, tension: 0.2 },
-        { label: 'ควัน (x10)', data: Array(8).fill(0), borderColor: '#d97706', borderWidth: 2, pointRadius: 2, tension: 0.2 },
-        { label: 'ฝุ่น PM2.5', data: Array(8).fill(0), borderColor: '#dc2626', borderWidth: 2, pointRadius: 2, tension: 0.2 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      scales: {
-        x: { grid: { color: '#e8f0e2' }, ticks: { font: { size: 10, family: 'JetBrains Mono' } } },
-        y: { grid: { color: '#e8f0e2' }, ticks: { font: { size: 10, family: 'JetBrains Mono' } } }
-      },
-      plugins: { legend: { labels: { boxWidth: 10, font: { size: 11, family: 'IBM Plex Sans Thai' } } } }
-    }
-  });
-
-  // คลังข้อมูลบันทึกจำลองเหตุการณ์เบื้องต้นเพื่อทดสอบ UI
-  let seedLogs = [
-    { type: 'normal', title: 'เปิดระบบเชื่อมต่อกับ Node สถานีเสร็จสิ้น', time: '14:20:10' },
-    { type: 'normal', title: 'เริ่มทำการปรับเทียบความเสี่ยงด้วยอัลกอริทึม AI', time: '14:20:12' }
+  // System Log Event Mock Databases
+  let databaseLogs = [
+    { time: '20:12', title: 'สถานีตรวจวัดแม่ริม', text: 'ตรวจพบดัชนีมวลอนุมูลอิสระควันคงที่สภาวะอากาศปกติ', state: 'normal', label: '[🟢 ปกติ]' },
+    { time: '19:45', title: 'สถานีห้วยตึงเฒ่า', text: 'เซนเซอร์รับความร้อนลดลงหลังพ้นช่วงอุณหภูมิวิกฤตแดดบ่าย', state: 'normal', label: '[🟢 ปกติ]' }
   ];
 
-  function renderLogs(){
-    const logBox = document.getElementById('logBox');
-    if(seedLogs.length === 0){
-      logBox.innerHTML = `<div style="text-align:center;color:var(--text-faint);padding:16px;">ไม่มีข้อมูลบันทึก</div>`;
+  function renderLogs() {
+    const container = document.getElementById('logContainer');
+    container.innerHTML = '';
+    if(databaseLogs.length === 0) {
+      container.innerHTML = '<div class="log-empty">ไม่มีประวัติเหตุการณ์ฉุกเฉินล่าสุด</div>';
       return;
     }
-    logBox.innerHTML = seedLogs.map(log => `
-      <div class="log-item ${log.type}">
-        <div class="log-header">
-          <span>ประเภท: ${log.type==='fire'?'🔥 แจ้งเหตุไฟป่า':log.type==='warn'?'⚠️ เฝ้าระวัง':'🟢 รายงานปกติ'}</span>
-          <span style="font-family:var(--font-mono)">${log.time}</span>
+    databaseLogs.forEach(item => {
+      container.innerHTML += `
+        <div class="log-item">
+          <div class="log-marker ${item.state}"></div>
+          <div class="log-body">
+            <div class="log-top">
+              <span class="log-title">${item.title} ${item.label}</span>
+              <span class="log-time">${item.time} น.</span>
+            </div>
+            <div class="log-detail">${item.text}</div>
+          </div>
         </div>
-        <div class="log-title">${log.title}</div>
-      </div>
-    `).join('');
-  }
-  renderLogs();
-
-  // รับข้อมูล JSON payload จำลองการยิงมาจากอุปกรณ์รับปลายทาง (LoRa Receiver)
-  function feedData(payload) {
-    const { temp, hum, smoke, pm, ai, prob, lat, lng } = payload;
-
-    document.getElementById('cardTemp').innerText = (+temp).toFixed(1);
-    document.getElementById('cardHum').innerText = (+hum).toFixed(1);
-    document.getElementById('cardSmoke').innerText = Math.round(smoke);
-    document.getElementById('cardPM').innerText = (+pm).toFixed(1);
-
-    const state = setGaugeValue(+prob);
-    
-    // การเคลื่อนพิกัดที่แท้จริงบน Leaflet Map
-    const jitLat = +lat === 0 ? 14.7196 : +lat;
-    const jitLng = +lng === 0 ? 101.4371 : +lng;
-    updateMapMarker(state, jitLat, jitLng);
-
-    [['sparkTemp',temp],['sparkHum',hum],['sparkSmoke',smoke/8],['sparkPM',pm]].forEach(([id,val])=>{\r
-      const ch = sparkCharts[id];
-      ch.data.datasets[0].data.push(+val);
-      ch.data.datasets[0].data.shift();
-      ch.update('none');
+      `;
     });
+  }
 
-    const now = new Date().toLocaleTimeString('th-TH',{hour12:false, hour:'2-digit', minute:'2-digit'});
-    trendChart.data.labels.push(now);
-    trendChart.data.labels.shift();
-    trendChart.data.datasets[0].data.push(+temp); trendChart.data.datasets[0].data.shift();
-    trendChart.data.datasets[1].data.push(+hum); trendChart.data.datasets[1].data.shift();
-    trendChart.data.datasets[2].data.push(+smoke/10); trendChart.data.datasets[2].data.shift();
-    trendChart.data.datasets[3].data.push(+pm); trendChart.data.datasets[3].data.shift();
-    trendChart.update('none');
-
-    if(state !== 'normal'){\r
-      const timeNow = new Date().toLocaleTimeString('th-TH',{hour12:false});
-      seedLogs.unshift({
-        type: state,
-        title: state==='fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่านกลุ่ม LINE บัซเซอร์เปิดการทำงาน' : 'พารามิเตอร์มีความร้อนสะสมเกินมาตรฐานโปรดติดตามข้อมูล',
-        time: timeNow
-      });
-      if(seedLogs.length > 25) seedLogs.pop();
-      renderLogs();
+  // Modal Control Interactivity
+  function toggleLoginModal(show) {
+    const modal = document.getElementById('loginModal');
+    const errBox = document.getElementById('loginErrorBox');
+    errBox.classList.remove('visible');
+    if(show) {
+      modal.classList.add('open');
+      document.getElementById('txtEmail').value = '';
+      document.getElementById('txtPassword').value = '';
+    } else {
+      modal.classList.remove('open');
     }
   }
 
-  // ระบบดึงข้อมูลจาก Google Apps Script Endpoint (Long Polling อัปเดตทุก 4 วินาที)
-  // ให้แก้ไข URL ด้านล่างนี้ให้ตรงกับ Web App URL ล่าสุดของคุณใน Google Sheets
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwPqXm4V9-Z42i5_8K-pC-PqK7I3lH-kHj37gN-qWJ5hI8-6rB5P6V0w7m2_k9X7X5X/exec";
+  // Hardcoded Verification Authentication Function
+  function executeStaffLogin() {
+    const email = document.getElementById('txtEmail').value.trim();
+    const pass = document.getElementById('txtPassword').value.trim();
+    const card = document.getElementById('loginCard');
+    const errBox = document.getElementById('loginErrorBox');
 
-  function startSyncData() {
-    setInterval(() => {
-      fetch(`${SCRIPT_URL}?type=latest`)
-        .then(res => res.json())
-        .then(res => {
-          if (res.status === 'ok' && res.data) {
-            const d = res.data;
-            feedData({
-              temp: d.temperature,
-              hum: d.humidity,
-              pm: d.pm25,
-              smoke: d.smoke,
-              ai: d.ai_result,
-              prob: d.probability,
-              lat: d.lat,
-              lng: d.lng
-            });
-          }
-        })
-        .catch(err => console.log("เชื่อมต่อข้อมูล Sheets ล้มเหลว:", err));
-    }, 4000); 
+    if(email === '36236@pcschool.ac.th' && pass === '1234') {
+      // Authenticated Login Granted Successfully
+      toggleLoginModal(false);
+      document.body.classList.add('role-admin');
+      
+      // Mutate Global Layout Top Navbar Interface Panel Controls
+      document.getElementById('authInterface').innerHTML = `
+        <div class="admin-only-flex" style="display:flex; align-items:center; gap:12px;">
+          <span class="role-badge admin">🛡️ เจ้าหน้าที่สิทธิ์สูงสุด (Admin)</span>
+          <button class="logout-btn" onclick="executeStaffLogout()">📴 ออกจากระบบ</button>
+        </div>
+      `;
+    } else {
+      // Access Authorization Denied Error Animations Trigger
+      errBox.classList.add('visible');
+      card.classList.add('shake-effect');
+      setTimeout(() => card.classList.remove('shake-effect'), 400);
+    }
   }
-  
-  startSyncData();
+
+  function executeStaffLogout() {
+    document.body.classList.remove('role-admin');
+    document.getElementById('authInterface').innerHTML = `
+      <button class="staff-login-btn" onclick="toggleLoginModal(true)">🔑 สำหรับเจ้าหน้าที่ (Staff Login)</button>
+    `;
+    simulateState('normal'); // Reset state back safely
+  }
+
+  // Web Audio API Web Siren Generator Engine
+  function startSirenSound() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (sirenOsc) return;
+
+    sirenOsc = audioCtx.createOscillator();
+    let gainNode = audioCtx.createGain();
+    
+    sirenOsc.type = 'sine';
+    sirenOsc.frequency.setValueAtTime(850, audioCtx.currentTime); 
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // Safe Volume Level
+
+    sirenOsc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    sirenOsc.start();
+
+    let toggle = false;
+    sirenInterval = setInterval(() => {
+      if(sirenOsc) {
+        let freq = toggle ? 950 : 750;
+        sirenOsc.frequency.linearRampToValueAtTime(freq, audioCtx.currentTime + 0.25);
+        toggle = !toggle;
+      }
+    }, 300);
+  }
+
+  function muteSiren() {
+    if(sirenInterval) { clearInterval(sirenInterval); sirenInterval = null; }
+    if(sirenOsc) {
+      try { sirenOsc.stop(); } catch(e){}
+      sirenOsc.disconnect(); sirenOsc = null;
+    }
+  }
+
+  // Dashboard Master Simulation States Control Dispatcher
+  function simulateState(mode) {
+    const pill = document.getElementById('statusPillContainer');
+    const banner = document.getElementById('emergencyBanner');
+    
+    document.body.className = `state-${mode} ` + (document.body.classList.contains('role-admin') ? 'role-admin' : '');
+
+    if (mode === 'normal') {
+      muteSiren();
+      banner.classList.remove('active');
+      drawGauge(34, 'normal');
+      pill.innerHTML = `<div class="status-pill"><div class="ring"></div><span id="statusLabel">[🟢 ปกติ] สภาวะสมดุล</span></div>`;
+      
+      document.getElementById('valTemp').innerText = '28.5'; document.getElementById('tagTemp').innerText = '[🟢 ปกติ]'; document.getElementById('tagTemp').style.color = 'var(--moss)';
+      document.getElementById('valHumid').innerText = '62'; document.getElementById('tagHumid').innerText = '[🟢 ปกติ]'; document.getElementById('tagHumid').style.color = 'var(--moss)';
+      document.getElementById('valWind').innerText = '12.4'; document.getElementById('tagWind').innerText = '[🟢 ปกติ]'; document.getElementById('tagWind').style.color = 'var(--moss)';
+      document.getElementById('valSmoke').innerText = '18'; document.getElementById('tagSmoke').innerText = '[🟢 ปกติ]'; document.getElementById('tagSmoke').style.color = 'var(--moss)';
+
+      updateMapMarker(18.7883, 98.9853, "[🟢 ปกติ] ดอยสุเทพ สถานการณ์ทั่วไปปกติ", 'normal');
+      updateChartData([30, 32, 35, 34, 33, 34], '#16a34a');
+      
+      databaseLogs.unshift({ time: new Date().toTimeString().split(' ')[0].substring(0,5), title: 'ระบบจำลองสถานการณ์', text: 'เจ้าหน้าที่รีเซ็ตสภาวะแวดล้อมกลับคืนสู่สภาวะสมดุลทั่วไป', state: 'normal', label: '[🟢 ปกติ]' });
+    }
+    else if (mode === 'watch') {
+      muteSiren();
+      banner.classList.remove('active');
+      drawGauge(62, 'watch');
+      pill.innerHTML = `<div class="status-pill"><div class="ring"></div><span id="statusLabel">[⚠️ เฝ้าระวัง] ดัชนีความร้อนสะสมตัวสูง</span></div>`;
+      
+      document.getElementById('valTemp').innerText = '36.8'; document.getElementById('tagTemp').innerText = '[⚠️ เฝ้าระวัง]'; document.getElementById('tagTemp').style.color = 'var(--amber)';
+      document.getElementById('valHumid').innerText = '41'; document.getElementById('tagHumid').innerText = '[⚠️ เฝ้าระวัง]'; document.getElementById('tagHumid').style.color = 'var(--amber)';
+      document.getElementById('valWind').innerText = '22.1'; document.getElementById('tagWind').innerText = '[⚠️ เฝ้าระวัง]'; document.getElementById('tagWind').style.color = 'var(--amber)';
+      document.getElementById('valSmoke').innerText = '45'; document.getElementById('tagSmoke').innerText = '[⚠️ เฝ้าระวัง]'; document.getElementById('tagSmoke').style.color = 'var(--amber)';
+
+      updateMapMarker(18.8340, 98.9500, "[⚠️ เฝ้าระวัง] ตรวจพบจุดความร้อนระอุกลุ่มใต้ผืนป่าเชิงเขาเหนือเขื่อน", 'watch');
+      updateChartData([30, 38, 45, 52, 58, 62], '#d97706');
+
+      databaseLogs.unshift({ time: new Date().toTimeString().split(' ')[0].substring(0,5), title: 'ศูนย์บัญชาการสถานการณ์', text: 'แจ้งยกระดับเตือนภัยเฝ้าระวัง มีความร้อนสะสมตัวหนาแน่นในพิกัดป่าชั้นใน', state: 'watch', label: '[⚠️ เฝ้าระวัง]' });
+    }
+    else if (mode === 'fire') {
+      drawGauge(88, 'fire');
+      pill.innerHTML = `<div class="status-pill"><div class="ring"></div><span id="statusLabel">[🔥 วิกฤต] เกิดอัคคีภัยในพื้นที่ตรวจวัด</span></div>`;
+      banner.classList.add('active');
+      
+      // Fire Alarm Siren Trigger Audio Processing API Automatically
+      startSirenSound();
+
+      document.getElementById('valTemp').innerText = '43.2'; document.getElementById('tagTemp').innerText = '[🔥 วิกฤต]'; document.getElementById('tagTemp').style.color = 'var(--ember)';
+      document.getElementById('valHumid').innerText = '19'; document.getElementById('tagHumid').innerText = '[🔥 วิกฤต]'; document.getElementById('tagHumid').style.color = 'var(--ember)';
+      document.getElementById('valWind').innerText = '38.6'; document.getElementById('tagWind').innerText = '[🔥 วิกฤต]'; document.getElementById('tagWind').style.color = 'var(--ember)';
+      document.getElementById('valSmoke').innerText = '280'; document.getElementById('tagSmoke').innerText = '[🔥 วิกฤต]'; document.getElementById('tagSmoke').style.color = 'var(--ember)';
+
+      updateMapMarker(18.8100, 98.9200, "[🔥 วิกฤต] ตรวจพบการปะทุของไฟป่ารุนแรงลุกลามต่อเนื่อง 5 ไร่/ชั่วโมง", 'fire');
+      updateChartData([35, 48, 60, 72, 80, 88], '#dc2626');
+
+      databaseLogs.unshift({ time: new Date().toTimeString().split(' ')[0].substring(0,5), title: 'สถานีตรวจวัดแม่เหียะ', text: 'สัญญาณเตือนภัยพุ่งสูงทะลุ 75% ตรวจพบความหนาแน่นกลุ่มควันไฟและขี้เถ้าปริมาณวิกฤต', state: 'fire', label: '[🔥 วิกฤต]' });
+    }
+    renderLogs();
+  }
+
+  function updateChartData(newData, color) {
+    mainChart.data.datasets[0].data = newData;
+    mainChart.data.datasets[0].borderColor = color;
+    mainChart.update();
+  }
 </script>
 </body>
 </html>
