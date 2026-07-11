@@ -790,6 +790,17 @@
           <div class="node-mini-label">จำนวนโหนด</div>
           <div class="node-mini-value mono">1 จุด</div>
         </div>
+        <div class="node-mini-stat">
+          <div class="node-mini-label">สถานะโหนด</div>
+          <div class="node-mini-value mono" id="nodeHealthText">--</div>
+        </div>
+        <div class="node-mini-stat">
+          <div class="node-mini-label">พลังงาน</div>
+          <!-- ยังไม่มีเซนเซอร์วัดแบตเตอรี่จริงบนบอร์ด (ตอนนี้เสียบ Power Bank ไว้ทดสอบ)
+               เมื่อเพิ่มวงจรวัดแรงดันแบต (เช่น ผ่าน ADC ของ ESP32) แล้ว ให้ส่งค่ามาเป็นฟิลด์ d.batteryPct
+               ในข้อมูลจาก Sheet แล้วโค้ดฝั่งนี้จะโชว์เปอร์เซ็นต์แบตให้อัตโนมัติ (ดูฟังก์ชัน updatePowerText) -->
+          <div class="node-mini-value mono" id="nodePowerText">Power Bank (ทดสอบ)</div>
+        </div>
       </div>
       <div class="gauge-note" style="text-align:left; margin-top:2px;">
         พิกัดอ้างอิงจากโมดูล GPS (NEO-6M) บนบอร์ด Sender ส่งพ่วงมากับข้อมูลเซนเซอร์ทุกรอบผ่าน LoRa<br><br>
@@ -880,22 +891,33 @@
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxiKwveq59T_ti3wGPZ2dfkxykfpZyFwP4ydSVI-nesBX38aL6mn6Sr2aHoVmNUB64M/exec";
 const POLL_INTERVAL_MS = 7000;
 
-// ⚠️ นี่คือ UI gate ฝั่งไคลเอนต์เท่านั้น ไม่ใช่ระบบยืนยันตัวตนระดับ server จริง
-// เก็บเป็นค่า SHA-256 hash แทน plain text เพื่อไม่ให้เห็นอีเมล/รหัสผ่านตรง ๆ จากการกด "View Source"
-// วิธีเปลี่ยนอีเมล/รหัสผ่านผู้ดูแล: เปิด Console ของเบราว์เซอร์ (F12) แล้วพิมพ์
-//   await hashAdminCredential("ค่าใหม่ที่ต้องการ")
-// จะได้ค่า hash มาแทนที่ตัวแปรด้านล่างนี้
-const ADMIN_EMAIL_HASH    = "eb9965387ac5ab8574fec9924a9bf49d78811c7b8e7c5825d77dfd352db0caf4"; // sha256("36236@pcschool.ac.th")
-const ADMIN_PASSWORD_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // sha256("1234")
+// ✅ แก้จุดโหว่เดิม: ก่อนหน้านี้ ADMIN_PASSWORD_HASH ถูกฝังไว้ใน JS ฝั่งหน้าเว็บตรง ๆ
+// ทำให้ใครก็ตามกด View Source แล้วเอา hash ไปสวมรอย/ไปเดา offline ได้ทันที (ยิ่ง hash เดี่ยวแบบ
+// sha256 ไม่มี salt/iteration ยิ่งเดารหัสสั้น ๆ เช่น "1234" ได้ในเสี้ยววินาที)
+// ตอนนี้ตรวจรหัสผ่านที่ฝั่งเซิร์ฟเวอร์ (Google Apps Script) แทน — ค่า hash ที่ถูกต้องไม่ถูกส่งมาที่ฝั่งไคลเอนต์อีกต่อไป
+// ต้องเพิ่มฟังก์ชัน doPost() ในโปรเจกต์ Apps Script เดิม (ดูไฟล์ Code.gs ที่แนบมาให้)
+// และตั้งค่า ADMIN_EMAIL_HASH / ADMIN_PASSWORD_HASH ไว้ใน Script Properties ของ Apps Script เท่านั้น
 const LOGIN_MAX_ATTEMPTS  = 5;
 const LOGIN_LOCKOUT_MS    = 30000; // ล็อก 30 วินาทีหลังพิมพ์ผิดครบจำนวนครั้ง
+const LOGIN_FAIL_KEY  = 'fg_login_fail_count';
+const LOGIN_LOCK_KEY  = 'fg_login_lock_until';
 
 async function sha256Hex(text){
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
-// เผื่ออยากสร้าง hash ใหม่จาก Console: await hashAdminCredential("ค่าที่ต้องการ")
+// เผื่ออยากสร้าง hash ใหม่จาก Console เพื่อไปตั้งใน Script Properties ของ Apps Script:
+//   await hashAdminCredential("ค่าที่ต้องการ")
 window.hashAdminCredential = sha256Hex;
+
+// เช็คว่ายังอยู่ในสถานะแอดมิน (จำไว้ในแท็บนี้ ไม่ต้อง login ซ้ำเวลาโหลดหน้าใหม่ในแท็บเดิม)
+if(sessionStorage.getItem('fg_admin_token')){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    document.body.classList.add('role-admin');
+    const btn = document.getElementById('adminLoginBtn');
+    if(btn) btn.style.display = 'none';
+  });
+}
 
 /* =========================================================
    LOGIN LOGIC (สำหรับ Admin เท่านั้น — ผู้ใช้ทั่วไปเห็น Dashboard ได้ทันที)
@@ -926,8 +948,8 @@ function closeAdminLogin(){
   document.getElementById('loginOverlay').classList.remove('visible');
 }
 
-let loginFailCount = 0;
-let loginLockedUntil = 0;
+let loginFailCount   = Number(localStorage.getItem(LOGIN_FAIL_KEY) || 0);
+let loginLockedUntil = Number(localStorage.getItem(LOGIN_LOCK_KEY) || 0);
 
 async function attemptAdminLogin(){
   const now = Date.now();
@@ -939,28 +961,57 @@ async function attemptAdminLogin(){
 
   const email = document.getElementById('adminEmail').value.trim();
   const pass  = document.getElementById('adminPassword').value;
-  const [emailHash, passHash] = await Promise.all([sha256Hex(email), sha256Hex(pass)]);
+  const loginBtn = document.querySelector('.login-btn');
+  if(loginBtn){ loginBtn.disabled = true; loginBtn.textContent = 'กำลังตรวจสอบ...'; }
 
-  if(emailHash === ADMIN_EMAIL_HASH && passHash === ADMIN_PASSWORD_HASH){
-    loginFailCount = 0;
-    document.body.classList.add('role-admin');
-    document.getElementById('adminLoginBtn').style.display = 'none';
-    closeAdminLogin();
-    alert('เข้าสู่ระบบผู้ดูแลระบบสำเร็จ');
-  } else {
-    loginFailCount++;
-    if(loginFailCount >= LOGIN_MAX_ATTEMPTS){
-      loginLockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
-      showLoginError(`พิมพ์ผิดครบ ${LOGIN_MAX_ATTEMPTS} ครั้ง กรุณารอ ${LOGIN_LOCKOUT_MS/1000} วินาทีแล้วลองใหม่`);
+  try{
+    const [emailHash, passHash] = await Promise.all([sha256Hex(email), sha256Hex(pass)]);
+
+    // ส่ง hash ไปให้ Apps Script (server) เป็นคนเทียบค่าจริง ฝั่งไคลเอนต์ไม่รู้คำตอบที่ถูกต้องอีกต่อไป
+    const res = await fetch(SHEET_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain;charset=utf-8'}, // ใช้ text/plain กัน CORS preflight ของ Apps Script
+      body: JSON.stringify({ type:'adminLogin', emailHash, passHash })
+    });
+    const json = await res.json();
+
+    if(json.status === 'ok'){
+      loginFailCount = 0;
+      loginLockedUntil = 0;
+      localStorage.removeItem(LOGIN_FAIL_KEY);
+      localStorage.removeItem(LOGIN_LOCK_KEY);
+      sessionStorage.setItem('fg_admin_token', json.token || '1');
+      document.body.classList.add('role-admin');
+      document.getElementById('adminLoginBtn').style.display = 'none';
+      closeAdminLogin();
+      alert('เข้าสู่ระบบผู้ดูแลระบบสำเร็จ');
+    } else if(json.status === 'locked'){
+      loginLockedUntil = Date.now() + (json.secLeft || 30) * 1000;
+      localStorage.setItem(LOGIN_LOCK_KEY, loginLockedUntil);
+      showLoginError(`พิมพ์ผิดหลายครั้งเกินไป กรุณารออีก ${json.secLeft || 30} วินาที`);
     } else {
-      showLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      loginFailCount++;
+      localStorage.setItem(LOGIN_FAIL_KEY, String(loginFailCount));
+      if(loginFailCount >= LOGIN_MAX_ATTEMPTS){
+        loginLockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
+        localStorage.setItem(LOGIN_LOCK_KEY, String(loginLockedUntil));
+        showLoginError(`พิมพ์ผิดครบ ${LOGIN_MAX_ATTEMPTS} ครั้ง กรุณารอ ${LOGIN_LOCKOUT_MS/1000} วินาทีแล้วลองใหม่`);
+      } else {
+        showLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      }
     }
+  }catch(err){
+    console.error('attemptAdminLogin error:', err);
+    showLoginError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่');
+  }finally{
+    if(loginBtn){ loginBtn.disabled = false; loginBtn.textContent = 'เข้าสู่ระบบผู้ดูแล'; }
   }
 }
 
 function logout(){
   document.body.classList.remove('role-admin');
   document.getElementById('adminLoginBtn').style.display = '';
+  sessionStorage.removeItem('fg_admin_token');
 }
 
 // Enter key submits the login form when the modal is open
@@ -984,6 +1035,20 @@ let pollTimerId = null;
 function tickClock(){
   const d = new Date();
   document.getElementById('clock').textContent = d.toLocaleTimeString('th-TH', {hour12:false});
+  refreshConnAge(); // ให้ตัวเลข "ไม่อัปเดตมาแล้วกี่ชม./นาที/วินาที" นับไล่ขึ้นแบบเรียลไทม์ทุกวินาที ไม่ใช่แค่ตอน poll รอบใหม่
+}
+
+// แปลงมิลลิวินาทีเป็นข้อความ "X ชม. Y นาที Z วินาที" (แทนที่จะโชว์แค่หลักนาทีแบบเดิม)
+function formatAge(ms){
+  const totalSec = Math.max(0, Math.floor(ms/1000));
+  const h = Math.floor(totalSec/3600);
+  const m = Math.floor((totalSec%3600)/60);
+  const s = totalSec%60;
+  const parts = [];
+  if(h > 0) parts.push(`${h} ชม.`);
+  if(h > 0 || m > 0) parts.push(`${m} นาที`);
+  parts.push(`${s} วินาที`);
+  return parts.join(' ');
 }
 
 const COLORS = { normal: '#22c55e', watch:'#f59e0b', fire:'#ef4444' };
@@ -1003,6 +1068,43 @@ function setConnStatus(kind, extraText){
   text.textContent = extraText;
 }
 
+/* ---------- "สถานะโหนด" (node health badge) ----------
+   ยังไม่มีเซนเซอร์แบตเตอรี่จริง (ตอนนี้ทดสอบด้วย Power Bank) จึงยังบอก "แบตกี่ %" ไม่ได้
+   สิ่งที่บอกได้จริงตอนนี้คือ "ยังติดต่อโหนดได้อยู่ไหม" เท่านั้น จึงใช้ 4 สถานะนี้:
+     ONLINE        = ได้รับข้อมูลใหม่ภายในเวลาที่กำหนด (ปกติดี)
+     SIGNAL LOST   = ไม่มีข้อมูลใหม่นานเกิน STALE_THRESHOLD_MS (สัญญาณ/พลังงานน่าจะมีปัญหา)
+     SIGNAL LOST (สีแดง เสี่ยงสูง) = เหมือนข้างบน แต่เงียบไปหลังจากอุณหภูมิสูงเกิน HEAT_RISK_THRESHOLD_C — เคสอันตรายที่สุดตามที่ระบุไว้
+     OFFLINE       = เชื่อมต่อ Google Sheet ไม่ได้เลย (เช่น ตัด Wi-Fi/อินเทอร์เน็ตทั้งระบบ)
+   เมื่อเพิ่มฮาร์ดแวร์วัดแบตจริงแล้ว ค่อยเพิ่มสถานะ "LOW BATTERY" แยกออกมาอีกสถานะได้ */
+function updateNodeHealthBadge(kind){
+  const el = document.getElementById('nodeHealthText');
+  if(!el) return;
+  const map = {
+    'online':          { text: 'ONLINE',          color: COLORS.normal },
+    'signal-lost':      { text: 'SIGNAL LOST',      color: COLORS.watch },
+    'signal-lost-risk': { text: 'SIGNAL LOST ⚠',    color: COLORS.fire },
+    'offline':          { text: 'OFFLINE',          color: COLORS.fire },
+    'error':            { text: 'SENSOR ERROR',     color: STATUS_ERROR_COLOR }
+  };
+  const s = map[kind] || map['offline'];
+  el.textContent = s.text;
+  el.style.color = s.color;
+}
+
+// แสดงข้อมูลพลังงาน: ถ้า Sheet ส่งฟิลด์ batteryPct มาจริง (ต่อฮาร์ดแวร์วัดแบตแล้ว) ให้โชว์เป็น % แทนข้อความ Power Bank
+function updatePowerText(d){
+  const el = document.getElementById('nodePowerText');
+  if(!el) return;
+  if(isValidNumber(d.batteryPct)){
+    const pct = Math.round(Number(d.batteryPct));
+    el.textContent = `${pct}%`;
+    el.style.color = pct <= 20 ? COLORS.fire : pct <= 40 ? COLORS.watch : COLORS.normal;
+  } else {
+    el.textContent = 'Power Bank (ทดสอบ)';
+    el.style.color = '';
+  }
+}
+
 /* ตรวจสอบว่าเป็นตัวเลขที่ใช้งานได้จริง (กันกรณี Sheet ส่งค่า null / ว่าง / ข้อความ / NaN มา) */
 function isValidNumber(v){
   if(v === null || v === undefined || v === '') return false;
@@ -1016,6 +1118,9 @@ function numOrNull(v){
 
 let gctx, sparkCharts = {}, trendChart, map, nodeMarker;
 let NODE_LAT = 14.70030, NODE_LNG = 101.40790;
+let lastDataTimestamp = null;   // เวลาของแถวข้อมูลล่าสุดที่ดึงมาได้สำเร็จ ใช้คำนวณอายุข้อมูลแบบเรียลไทม์
+let lastKnownTemp = null;       // อุณหภูมิล่าสุดที่อ่านได้ก่อนโหนดจะเงียบ/หลุดสัญญาณ ใช้ประเมินความเสี่ยงตอนสัญญาณหาย
+const HEAT_RISK_THRESHOLD_C = 40; // ถ้าโหนดเงียบไปหลังจากอุณหภูมิสูงกว่านี้ ให้ถือเป็น "สัญญาณหาย - เสี่ยงสูง"
 let seedLogs = [];
 let lastKnownState = 'normal';   // สภาวะที่ "ยืนยันแล้ว" และกำลังแสดงผลอยู่ (แบนเนอร์/เสียง/แจ้งเตือน)
 let pendingState = 'normal';     // สภาวะดิบล่าสุดที่อ่านได้จากเซนเซอร์ในรอบนี้
@@ -1360,6 +1465,7 @@ async function fetchLatest(){
       // แยกกรณี "ข้อมูลเซนเซอร์ผิดปกติ" ออกจาก "ข้อมูลเก่า/ไม่อัปเดต" อย่างชัดเจน (สีม่วง ไม่ใช่สีเหลือง)
       // และคงค่าตัวเลข/หน้าจอเดิมที่ยังถูกต้องไว้ ไม่เขียนทับด้วย NaN
       setConnStatus('error', `⚠ ข้อมูลเซนเซอร์ผิดปกติ: ${invalidFields.join(', ')}`);
+      updateNodeHealthBadge('error');
       return;
     }
 
@@ -1367,6 +1473,7 @@ async function fetchLatest(){
     document.getElementById('valHum').textContent = Number(d.humidity).toFixed(1);
     document.getElementById('valSmoke').textContent = Math.round(d.smoke);
     document.getElementById('valPM').textContent = Number(d.pm25).toFixed(1);
+    updatePowerText(d);
 
     const prob = Number(d.probability);
     const state = applyState(prob);
@@ -1390,19 +1497,34 @@ async function fetchLatest(){
 
     // ใช้เวลาจากแถวข้อมูลจริง (ถ้ามี) เพื่อรู้ว่าเซนเซอร์อัปเดตล่าสุดเมื่อไหร่ ไม่ใช่แค่เวลาที่หน้าเว็บ fetch สำเร็จ
     const dataTime = d.timestamp ? new Date(d.timestamp).getTime() : Date.now();
-    const ageMs = Date.now() - dataTime;
+    lastDataTimestamp = isNaN(dataTime) ? Date.now() : dataTime;
+    lastKnownTemp = Number(d.temperature); // จำอุณหภูมิล่าสุดไว้ เผื่อโหนดเงียบไปหลังจากนี้ จะได้รู้ว่าเงียบไปตอนอากาศร้อนแค่ไหน
     const lastUpdateEl = document.getElementById('lastUpdateText');
-    if(lastUpdateEl) lastUpdateEl.textContent = new Date(dataTime).toLocaleTimeString('th-TH',{hour12:false});
+    if(lastUpdateEl) lastUpdateEl.textContent = new Date(lastDataTimestamp).toLocaleTimeString('th-TH',{hour12:false});
 
-    if(isNaN(ageMs) || ageMs > STALE_THRESHOLD_MS){
-      const mins = Math.max(1, Math.round(ageMs/60000));
-      setConnStatus('stale', `ข้อมูลไม่อัปเดต (${mins} นาทีที่แล้ว)`);
-    } else {
-      setConnStatus('online', 'โหนดเซนเซอร์ออนไลน์');
-    }
+    refreshConnAge();
   }catch(err){
     console.error('fetchLatest error:', err);
     setConnStatus('offline', 'เชื่อมต่อ Sheet ไม่ได้');
+    updateNodeHealthBadge('offline');
+  }
+}
+
+// คำนวณอายุข้อมูลล่าสุดใหม่ทุกครั้งที่เรียก (ใช้ทั้งตอน fetch สำเร็จ และทุกวินาทีจาก tickClock)
+// เพื่อให้ตัวเลข ชม./นาที/วินาที เดินสดโดยไม่ต้องรอรอบ poll ถัดไป
+function refreshConnAge(){
+  if(lastDataTimestamp === null) return;
+  const ageMs = Date.now() - lastDataTimestamp;
+
+  if(ageMs > STALE_THRESHOLD_MS){
+    // โหนดเงียบไปตอนอากาศร้อนจัด (>= 40°C) = เคสอันตรายที่สุด (เสี่ยงไฟป่าแต่ไม่มีข้อมูลมายืนยัน) ให้แยกข้อความเตือนต่างหาก
+    const highRisk = isValidNumber(lastKnownTemp) && lastKnownTemp >= HEAT_RISK_THRESHOLD_C;
+    const riskNote = highRisk ? ' ⚠ เงียบไปตอนอากาศร้อนจัด (เสี่ยงสูง)' : '';
+    setConnStatus('stale', `ข้อมูลไม่อัปเดต (${formatAge(ageMs)}ที่แล้ว)${riskNote}`);
+    updateNodeHealthBadge(highRisk ? 'signal-lost-risk' : 'signal-lost');
+  } else {
+    setConnStatus('online', 'โหนดเซนเซอร์ออนไลน์');
+    updateNodeHealthBadge('online');
   }
 }
 
@@ -1580,6 +1702,10 @@ function setupDashboard(){
     document.getElementById('valHum').textContent = hum;
     document.getElementById('valSmoke').textContent = smoke;
     document.getElementById('valPM').textContent = pm;
+    updatePowerText({});
+    lastDataTimestamp = Date.now();
+    lastKnownTemp = Number(temp);
+    refreshConnAge();
 
     const state = applyState(prob);
 
