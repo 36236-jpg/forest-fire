@@ -433,6 +433,12 @@
 </head>
 <body>
 
+<div class="boot-overlay" id="bootOverlay">
+  <div class="boot-spinner"></div>
+  <div class="boot-text">กำลังโหลดข้อมูลเซนเซอร์...</div>
+  <div class="boot-sub">เชื่อมต่อกับ Google Sheet</div>
+</div>
+
 <!-- ================= LOGIN SCREEN ================= -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-card">
@@ -480,6 +486,7 @@
     </div>
     <div class="topbar-right">
       <span class="role-badge admin admin-only" id="adminModeBadge">ADMIN MODE</span>
+      <button class="logout-btn" id="soundToggleBtn" onclick="toggleAlarmSound()" title="เปิด/ปิดเสียงเตือนไฟป่า">🔔 เสียงเตือน</button>
       <div class="status-chip"><span class="dot" id="connDot"></span><span id="connText">โหนดเซนเซอร์ออนไลน์</span></div>
       <div class="clock mono" id="clock">--:--:--</div>
       <button class="logout-btn" id="adminLoginBtn" onclick="openAdminLogin()">สำหรับผู้ดูแลระบบ (Admin)</button>
@@ -714,10 +721,22 @@
 const SHEET_URL = "https://script.google.com/macros/s/AKfycbxiKwveq59T_ti3wGPZ2dfkxykfpZyFwP4ydSVI-nesBX38aL6mn6Sr2aHoVmNUB64M/exec";
 const POLL_INTERVAL_MS = 7000;
 
-// ⚠️ เปลี่ยนค่าเหล่านี้เป็นของคุณเอง — เก็บเป็น plain text ในไฟล์นี้
-// (นี่คือ UI gate เท่านั้น ไม่ใช่ระบบยืนยันตัวตนระดับ server จริง)
-const ADMIN_EMAIL     = "36236@pcschool.ac.th"; // อีเมลผู้ดูแล
-const ADMIN_PASSWORD  = "1234";                 // รหัสผ่านผู้ดูแล
+// ⚠️ นี่คือ UI gate ฝั่งไคลเอนต์เท่านั้น ไม่ใช่ระบบยืนยันตัวตนระดับ server จริง
+// เก็บเป็นค่า SHA-256 hash แทน plain text เพื่อไม่ให้เห็นอีเมล/รหัสผ่านตรง ๆ จากการกด "View Source"
+// วิธีเปลี่ยนอีเมล/รหัสผ่านผู้ดูแล: เปิด Console ของเบราว์เซอร์ (F12) แล้วพิมพ์
+//   await hashAdminCredential("ค่าใหม่ที่ต้องการ")
+// จะได้ค่า hash มาแทนที่ตัวแปรด้านล่างนี้
+const ADMIN_EMAIL_HASH    = "eb9965387ac5ab8574fec9924a9bf49d78811c7b8e7c5825d77dfd352db0caf4"; // sha256("36236@pcschool.ac.th")
+const ADMIN_PASSWORD_HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // sha256("1234")
+const LOGIN_MAX_ATTEMPTS  = 5;
+const LOGIN_LOCKOUT_MS    = 30000; // ล็อก 30 วินาทีหลังพิมพ์ผิดครบจำนวนครั้ง
+
+async function sha256Hex(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+// เผื่ออยากสร้าง hash ใหม่จาก Console: await hashAdminCredential("ค่าที่ต้องการ")
+window.hashAdminCredential = sha256Hex;
 
 /* =========================================================
    LOGIN LOGIC (สำหรับ Admin เท่านั้น — ผู้ใช้ทั่วไปเห็น Dashboard ได้ทันที)
@@ -748,16 +767,35 @@ function closeAdminLogin(){
   document.getElementById('loginOverlay').classList.remove('visible');
 }
 
-function attemptAdminLogin(){
+let loginFailCount = 0;
+let loginLockedUntil = 0;
+
+async function attemptAdminLogin(){
+  const now = Date.now();
+  if(now < loginLockedUntil){
+    const secLeft = Math.ceil((loginLockedUntil - now)/1000);
+    showLoginError(`พิมพ์ผิดหลายครั้งเกินไป กรุณารออีก ${secLeft} วินาที`);
+    return;
+  }
+
   const email = document.getElementById('adminEmail').value.trim();
   const pass  = document.getElementById('adminPassword').value;
-  if(email === ADMIN_EMAIL && pass === ADMIN_PASSWORD){
+  const [emailHash, passHash] = await Promise.all([sha256Hex(email), sha256Hex(pass)]);
+
+  if(emailHash === ADMIN_EMAIL_HASH && passHash === ADMIN_PASSWORD_HASH){
+    loginFailCount = 0;
     document.body.classList.add('role-admin');
     document.getElementById('adminLoginBtn').style.display = 'none';
     closeAdminLogin();
     alert('เข้าสู่ระบบผู้ดูแลระบบสำเร็จ');
   } else {
-    showLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    loginFailCount++;
+    if(loginFailCount >= LOGIN_MAX_ATTEMPTS){
+      loginLockedUntil = Date.now() + LOGIN_LOCKOUT_MS;
+      showLoginError(`พิมพ์ผิดครบ ${LOGIN_MAX_ATTEMPTS} ครั้ง กรุณารอ ${LOGIN_LOCKOUT_MS/1000} วินาทีแล้วลองใหม่`);
+    } else {
+      showLoginError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    }
   }
 }
 
@@ -790,10 +828,84 @@ function tickClock(){
 }
 
 const COLORS = { normal: '#22c55e', watch:'#f59e0b', fire:'#ef4444' };
+const STALE_THRESHOLD_MS = 5 * 60 * 1000; // ถ้าข้อมูลจาก Sheet เก่ากว่านี้ ถือว่า "ไม่อัปเดต" แม้เชื่อมต่อได้
+
+function setConnStatus(kind, extraText){
+  const dot = document.getElementById('connDot');
+  const text = document.getElementById('connText');
+  if(!dot || !text) return;
+  const color = kind === 'offline' ? COLORS.fire : kind === 'stale' ? COLORS.watch : COLORS.normal;
+  dot.style.background = color;
+  dot.style.boxShadow = `0 0 8px ${color}`;
+  text.textContent = extraText;
+}
 
 let gctx, sparkCharts = {}, trendChart, map, nodeMarker;
 let NODE_LAT = 14.70030, NODE_LNG = 101.40790;
 let seedLogs = [];
+let lastKnownState = 'normal';
+
+/* ---------- เสียงเตือนไฟป่า (สร้างเสียงเองด้วย Web Audio API ไม่ต้องใช้ไฟล์เสียงภายนอก) ---------- */
+let audioCtx = null;
+let alarmMuted = (localStorage.getItem('fg_alarm_muted') === '1');
+
+function updateSoundButton(){
+  const btn = document.getElementById('soundToggleBtn');
+  if(!btn) return;
+  btn.textContent = alarmMuted ? '🔕 เสียงเตือน (ปิด)' : '🔔 เสียงเตือน';
+}
+
+function toggleAlarmSound(){
+  alarmMuted = !alarmMuted;
+  localStorage.setItem('fg_alarm_muted', alarmMuted ? '1' : '0');
+  updateSoundButton();
+  if(!alarmMuted) ensureAudio();
+}
+
+function ensureAudio(){
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    audioCtx = new AC();
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+// เบราว์เซอร์ส่วนใหญ่ต้องมีการคลิกก่อนถึงจะเล่นเสียงได้ — ปลดล็อกไว้ตั้งแต่คลิกแรกที่หน้าเว็บ
+document.addEventListener('click', ()=>ensureAudio(), {once:true});
+
+function beep(freq, startTime, duration, gainPeak){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, startTime);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(gainPeak, startTime + 0.02);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(startTime);
+  osc.stop(startTime + duration + 0.02);
+}
+
+function playAlarm(state){
+  if(alarmMuted) return;
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const t0 = ctx.currentTime;
+  if(state === 'fire'){
+    // ไซเรน 2 โทนสลับ ดังชัดเจนสมกับเป็นสถานการณ์ฉุกเฉิน
+    for(let i=0;i<4;i++){
+      beep(880, t0 + i*0.35, 0.18, 0.22);
+      beep(660, t0 + i*0.35 + 0.18, 0.18, 0.22);
+    }
+  } else if(state === 'watch'){
+    // เสียงเตือนเบา ๆ 2 ครั้ง สำหรับสภาวะเฝ้าระวัง
+    beep(660, t0, 0.16, 0.14);
+    beep(660, t0 + 0.28, 0.16, 0.14);
+  }
+}
 
 function drawGauge(prob, state){
   // เกจแบบวงแหวนเรียบ (flat progress ring) แทนเกจเข็มแบบเดิม
@@ -925,6 +1037,13 @@ function applyState(prob){
   document.getElementById('triHeat').textContent = heat;
   drawGauge(prob, state);
   updateFireBanner(state);
+
+  // เล่นเสียงเตือนเมื่อ "เพิ่งเข้าสู่" สภาวะไฟป่า/เฝ้าระวัง (ไม่เล่นซ้ำทุกรอบขณะยังอยู่สภาวะเดิม)
+  if(state !== lastKnownState && (state === 'fire' || state === 'watch')){
+    playAlarm(state);
+  }
+  lastKnownState = state;
+
   return state;
 }
 
@@ -992,14 +1111,21 @@ async function fetchLatest(){
       ch.update('none');
     });
 
-    document.getElementById('connText').textContent = 'โหนดเซนเซอร์ออนไลน์';
-    document.getElementById('connDot').style.background = COLORS.normal;
+    // ใช้เวลาจากแถวข้อมูลจริง (ถ้ามี) เพื่อรู้ว่าเซนเซอร์อัปเดตล่าสุดเมื่อไหร่ ไม่ใช่แค่เวลาที่หน้าเว็บ fetch สำเร็จ
+    const dataTime = d.timestamp ? new Date(d.timestamp).getTime() : Date.now();
+    const ageMs = Date.now() - dataTime;
     const lastUpdateEl = document.getElementById('lastUpdateText');
-    if(lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString('th-TH',{hour12:false});
+    if(lastUpdateEl) lastUpdateEl.textContent = new Date(dataTime).toLocaleTimeString('th-TH',{hour12:false});
+
+    if(isNaN(ageMs) || ageMs > STALE_THRESHOLD_MS){
+      const mins = Math.max(1, Math.round(ageMs/60000));
+      setConnStatus('stale', `ข้อมูลไม่อัปเดต (${mins} นาทีที่แล้ว)`);
+    } else {
+      setConnStatus('online', 'โหนดเซนเซอร์ออนไลน์');
+    }
   }catch(err){
     console.error('fetchLatest error:', err);
-    document.getElementById('connText').textContent = 'เชื่อมต่อ Sheet ไม่ได้';
-    document.getElementById('connDot').style.background = COLORS.fire;
+    setConnStatus('offline', 'เชื่อมต่อ Sheet ไม่ได้');
   }
 }
 
@@ -1046,16 +1172,28 @@ async function fetchAlerts(){
   }
 }
 
-function pollLiveData(){
-  fetchLatest();
-  fetchHistory();
-  fetchAlerts();
+let firstLoadDone = false;
+
+function hideBootOverlay(){
+  const el = document.getElementById('bootOverlay');
+  if(el) el.classList.add('hidden');
+}
+
+async function pollLiveData(){
+  await Promise.allSettled([fetchLatest(), fetchHistory(), fetchAlerts()]);
+  if(!firstLoadDone){
+    firstLoadDone = true;
+    hideBootOverlay();
+  }
 }
 
 /* ---------- setup: runs once after first login ---------- */
 function setupDashboard(){
   tickClock();
   setInterval(tickClock, 1000);
+  updateSoundButton();
+  // กันเหนียว: ถ้าโหลดข้อมูลนานผิดปกติ (เช่นเน็ตหลุด) ให้ซ่อนหน้า loading ออกไปเองหลัง 10 วิ
+  setTimeout(hideBootOverlay, 10000);
 
   gctx = document.getElementById('gaugeCanvas').getContext('2d');
 
