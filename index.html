@@ -313,12 +313,20 @@
   .fire-banner-title{ font-size:15px; font-weight:700; color:#fff; }
   .fire-banner-sub{ font-size:12px; color:rgba(255,255,255,0.8); margin-top:2px; }
   .fire-banner-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  /* ปุ่มโทรทุกปุ่มเริ่มต้นเป็นสไตล์ "ปกติ" (โปร่งแสง) เหมือนกันหมด
+     จะเปลี่ยนเป็นสีขาวเฉพาะปุ่มที่เอาเมาส์ไปวางอยู่เท่านั้น ปุ่มอื่นยังคงปกติ */
   .fire-banner-btn{
     display:inline-flex; align-items:center; gap:7px;
-    background:#fff; color:#7f1d1d; font-weight:700; font-size:13px;
+    background:rgba(255,255,255,0.12); color:#fff; font-weight:700; font-size:13px;
     padding:9px 16px; border-radius:100px; text-decoration:none; white-space:nowrap;
+    border:1px solid rgba(255,255,255,0.3);
+    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .fire-banner-btn:hover, .fire-banner-btn:focus-visible{
+    background:#fff; color:#7f1d1d; border-color:#fff;
   }
   .fire-banner-btn.secondary{ background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.3); }
+  .fire-banner-btn.secondary:hover, .fire-banner-btn.secondary:focus-visible{ background:#fff; color:#7f1d1d; }
   .banner-recommend{
     background:rgba(255,255,255,0.14); border-radius:10px; padding:11px 14px;
   }
@@ -491,6 +499,57 @@
     0%{ transform:translate(-50%,-50%) scale(0.5); opacity:0.65; }
     100%{ transform:translate(-50%,-50%) scale(2.4); opacity:0; }
   }
+
+  /* =========================================================
+     สไตล์สำหรับการพิมพ์ (Print) — ตัดปุ่ม/เมนู/แผนที่/กราฟสีออก
+     เหลือแค่ข้อมูลสรุปเป็นขาวดำ อ่านง่าย ประหยัดหมึก
+     ========================================================= */
+  @media print{
+    /* ซ่อนส่วนที่ไม่จำเป็นตอนพิมพ์: เมนูบน, ปุ่มต่าง ๆ, แผนที่, กราฟ, สปาร์คไลน์, ป๊อปอัพล็อกอิน */
+    .login-overlay, .boot-overlay,
+    .topbar-right,
+    .fire-banner-actions,
+    .sim-btn, .export-btn,
+    .map-row, .map-panel, .node-card,
+    .chart-holder, .legend,
+    .spark-wrap,
+    .status-chip, .role-badge{
+      display:none !important;
+    }
+
+    * { animation:none !important; transition:none !important; box-shadow:none !important; }
+
+    html, body, .app{
+      background:#ffffff !important;
+      color:#000000 !important;
+    }
+    body{ padding:0; }
+
+    .panel, .sensor-card, .contact-card, .stat-card, .fire-banner, .watch-banner{
+      background:#ffffff !important;
+      border:1px solid #999 !important;
+      color:#000 !important;
+      break-inside:avoid;
+    }
+
+    .fire-banner, .watch-banner{
+      background:#fff !important;
+    }
+    .fire-banner-icon, .fire-banner-title, .fire-banner-sub,
+    .banner-recommend, .banner-recommend-title, .banner-recommend li, .banner-recommend li .ico{
+      color:#000 !important; background:#fff !important;
+    }
+
+    .gauge-pct, .status-pill, .sensor-value, .log-title, .brand-text h1{ color:#000 !important; }
+    .role-badge.admin{ display:none !important; }
+
+    .grid{ grid-template-columns:1fr 1fr; }
+    .log-list{ max-height:none !important; overflow:visible !important; }
+
+    a[href^="tel:"]::after{ content: " (" attr(href) ")"; }
+
+    .footer-note{ color:#000 !important; }
+  }
 </style>
 </head>
 <body>
@@ -553,6 +612,7 @@
     <div class="topbar-right">
       <span class="role-badge admin admin-only" id="adminModeBadge">ADMIN MODE</span>
       <button class="logout-btn icon-btn" id="soundToggleBtn" onclick="toggleAlarmSound()" title="เปิด/ปิดเสียงเตือนไฟป่า"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> เสียงเตือน</button>
+      <button class="logout-btn icon-btn" id="notifyToggleBtn" onclick="requestDesktopNotifyPermission()" title="เปิดแจ้งเตือนบนหน้าจอ (Desktop Notification) เผื่อสลับไปแท็บอื่น"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> เปิดแจ้งเตือนหน้าจอ</button>
       <div class="status-chip"><span class="dot" id="connDot"></span><span id="connText">โหนดเซนเซอร์ออนไลน์</span></div>
       <div class="clock mono" id="clock">--:--:--</div>
       <button class="logout-btn" id="adminLoginBtn" onclick="openAdminLogin()">สำหรับผู้ดูแลระบบ (Admin)</button>
@@ -927,22 +987,41 @@ function tickClock(){
 }
 
 const COLORS = { normal: '#22c55e', watch:'#f59e0b', fire:'#ef4444' };
+const STATUS_ERROR_COLOR = '#9333ea'; // สีม่วง ใช้แยกกรณี "ข้อมูลเซนเซอร์ผิดปกติ" ออกจากกรณี "ข้อมูลเก่า/ไม่อัปเดต" (อำพัน)
 const STALE_THRESHOLD_MS = 5 * 60 * 1000; // ถ้าข้อมูลจาก Sheet เก่ากว่านี้ ถือว่า "ไม่อัปเดต" แม้เชื่อมต่อได้
 
 function setConnStatus(kind, extraText){
   const dot = document.getElementById('connDot');
   const text = document.getElementById('connText');
   if(!dot || !text) return;
-  const color = kind === 'offline' ? COLORS.fire : kind === 'stale' ? COLORS.watch : COLORS.normal;
+  const color = kind === 'offline' ? COLORS.fire
+    : kind === 'error' ? STATUS_ERROR_COLOR
+    : kind === 'stale' ? COLORS.watch
+    : COLORS.normal;
   dot.style.background = color;
   dot.style.boxShadow = `0 0 8px ${color}`;
   text.textContent = extraText;
 }
 
+/* ตรวจสอบว่าเป็นตัวเลขที่ใช้งานได้จริง (กันกรณี Sheet ส่งค่า null / ว่าง / ข้อความ / NaN มา) */
+function isValidNumber(v){
+  if(v === null || v === undefined || v === '') return false;
+  const n = Number(v);
+  return Number.isFinite(n);
+}
+/* แปลงเป็นตัวเลข ถ้าค่าผิดปกติให้เป็น null แทน NaN (กันกราฟ/ข้อความแสดงค่าเพี้ยน) */
+function numOrNull(v){
+  return isValidNumber(v) ? Number(v) : null;
+}
+
 let gctx, sparkCharts = {}, trendChart, map, nodeMarker;
 let NODE_LAT = 14.70030, NODE_LNG = 101.40790;
 let seedLogs = [];
-let lastKnownState = 'normal';
+let lastKnownState = 'normal';   // สภาวะที่ "ยืนยันแล้ว" และกำลังแสดงผลอยู่ (แบนเนอร์/เสียง/แจ้งเตือน)
+let pendingState = 'normal';     // สภาวะดิบล่าสุดที่อ่านได้จากเซนเซอร์ในรอบนี้
+let pendingCount = 0;            // จำนวนรอบติดต่อกันที่อ่านได้สภาวะเดิม (ใช้ยืนยันก่อนแจ้งเตือนจริง)
+const CONFIRM_READINGS = 2;      // ต้องอ่านค่าซ้ำสภาวะเดิมกี่รอบติดกัน ก่อนขึ้นแบนเนอร์ฉุกเฉิน/เสียง/แจ้งเตือน
+                                  // (กันกรอบแดง+ปุ่มโทรขึ้นเร็วเกินไปจากค่าที่วูบขึ้นแค่ครั้งเดียว)
 
 /* ---------- เสียงเตือนไฟป่า (สร้างเสียงเองด้วย Web Audio API ไม่ต้องใช้ไฟล์เสียงภายนอก) ---------- */
 let audioCtx = null;
@@ -1007,6 +1086,48 @@ function playAlarm(state){
     beep(660, t0, 0.16, 0.14);
     beep(660, t0 + 0.28, 0.16, 0.14);
   }
+}
+
+/* ---------- แจ้งเตือนผ่าน Desktop Notification (Web Notification API) -----------
+   ใช้คู่กับเสียงเตือน เผื่อเปิดแท็บอื่น/สลับไปทำงานอื่นแล้วไม่ได้ยินเสียงทันที */
+function isNotificationSupported(){
+  return ('Notification' in window);
+}
+
+function requestDesktopNotifyPermission(){
+  if(!isNotificationSupported()) return;
+  if(Notification.permission === 'default'){
+    Notification.requestPermission().then(updateNotifyButton);
+  }
+}
+
+function showDesktopNotification(state, label){
+  if(!isNotificationSupported()) return;
+  if(Notification.permission !== 'granted') return;
+  const title = state === 'fire'
+    ? '🔥 ตรวจพบสภาวะไฟป่า — Forest Guard'
+    : '⚠️ เข้าสู่สภาวะเฝ้าระวัง — Forest Guard';
+  const body = `Sender-01 · อ.ปากช่อง จ.นครราชสีมา\n${label} — โทรแจ้งเหตุ 199 หรือ 1362`;
+  try{
+    const n = new Notification(title, {
+      body,
+      tag: 'forest-guard-alert', // ใช้ tag เดียวกัน กันแจ้งเตือนซ้อนกันเป็นชุด
+      renotify: true,
+      requireInteraction: state === 'fire'
+    });
+    n.onclick = () => { window.focus(); n.close(); };
+  }catch(err){
+    console.error('showDesktopNotification error:', err);
+  }
+}
+
+function updateNotifyButton(){
+  const btn = document.getElementById('notifyToggleBtn');
+  if(!btn || !isNotificationSupported()) return;
+  const perm = Notification.permission;
+  btn.innerHTML = perm === 'granted'
+    ? (ICON_BELL + ' แจ้งเตือนหน้าจอ (เปิดแล้ว)')
+    : (ICON_BELL_OFF + ' เปิดแจ้งเตือนหน้าจอ');
 }
 
 function drawGauge(prob, state){
@@ -1123,6 +1244,36 @@ function updateFireBanner(state){
   document.getElementById('watchBanner').classList.toggle('active', state === 'watch');
 }
 
+const STATE_SEVERITY = { normal:0, watch:1, fire:2 };
+
+/* จัดการการ "ยืนยัน" สภาวะก่อนสั่งขึ้นแบนเนอร์ฉุกเฉิน/เล่นเสียง/แจ้งเตือน Desktop
+   เพื่อไม่ให้กรอบแดงและปุ่มโทรกระพริบขึ้นทันทีจากค่าที่วูบขึ้นแค่รอบเดียวแล้วตกลง
+   - ถ้าสภาวะ "รุนแรงขึ้น" (เช่น ปกติ -> เฝ้าระวัง -> ไฟป่า) ต้องอ่านค่าซ้ำสภาวะเดิมติดกัน
+     ครบ CONFIRM_READINGS รอบก่อน ถึงจะแจ้งเตือนจริง
+   - ถ้าสภาวะ "ลดความรุนแรงลง" ให้อัปเดตทันที เพื่อไม่ให้แบนเนอร์ค้างอยู่นานเกินจำเป็น */
+function updateConfirmedState(state, label){
+  if(state === pendingState){
+    pendingCount++;
+  } else {
+    pendingState = state;
+    pendingCount = 1;
+  }
+
+  const isEscalating = STATE_SEVERITY[state] > STATE_SEVERITY[lastKnownState];
+  if(isEscalating && pendingCount < CONFIRM_READINGS){
+    return; // ยังยืนยันไม่ครบรอบ ยังไม่ต้องขึ้นแบนเนอร์/เสียง/แจ้งเตือน
+  }
+
+  if(state === lastKnownState) return;
+
+  updateFireBanner(state);
+  if(state === 'fire' || state === 'watch'){
+    playAlarm(state);
+    showDesktopNotification(state, label);
+  }
+  lastKnownState = state;
+}
+
 function applyState(prob){
   const panel = document.getElementById('gaugePanel');
   let state, label, fuel, ox, heat;
@@ -1138,14 +1289,10 @@ function applyState(prob){
   document.getElementById('triFuel').textContent = fuel;
   document.getElementById('triOx').textContent = ox;
   document.getElementById('triHeat').textContent = heat;
-  drawGauge(prob, state);
-  updateFireBanner(state);
+  drawGauge(prob, state); // เกจวัดยังอัปเดตแบบเรียลไทม์ตามค่าจริงเสมอ ไม่หน่วงเวลา
 
-  // เล่นเสียงเตือนเมื่อ "เพิ่งเข้าสู่" สภาวะไฟป่า/เฝ้าระวัง (ไม่เล่นซ้ำทุกรอบขณะยังอยู่สภาวะเดิม)
-  if(state !== lastKnownState && (state === 'fire' || state === 'watch')){
-    playAlarm(state);
-  }
-  lastKnownState = state;
+  // ส่วนที่หน่วงเวลา (debounce) คือแบนเนอร์ฉุกเฉิน/เสียง/แจ้งเตือนเท่านั้น
+  updateConfirmedState(state, label);
 
   return state;
 }
@@ -1194,6 +1341,27 @@ async function fetchLatest(){
     if(json.status !== 'ok' || !json.data) return;
     const d = json.data;
 
+    // ตรวจสอบความถูกต้องของค่าจาก Sheet ก่อนนำไปแสดงผล
+    // กันกรณีเซนเซอร์เสีย/หลุด แล้วส่งค่า null, ค่าว่าง, หรือข้อความแปลกปลอมมาแทนตัวเลข
+    const fieldChecks = {
+      'อุณหภูมิ': d.temperature,
+      'ความชื้น': d.humidity,
+      'ควัน': d.smoke,
+      'ฝุ่น PM2.5': d.pm25,
+      'ความน่าจะเป็นไฟป่า': d.probability
+    };
+    const invalidFields = Object.entries(fieldChecks)
+      .filter(([, v]) => !isValidNumber(v))
+      .map(([label]) => label);
+
+    if(invalidFields.length > 0){
+      console.warn('fetchLatest: ค่าจากเซนเซอร์ผิดปกติ ->', invalidFields, d);
+      // แยกกรณี "ข้อมูลเซนเซอร์ผิดปกติ" ออกจาก "ข้อมูลเก่า/ไม่อัปเดต" อย่างชัดเจน (สีม่วง ไม่ใช่สีเหลือง)
+      // และคงค่าตัวเลข/หน้าจอเดิมที่ยังถูกต้องไว้ ไม่เขียนทับด้วย NaN
+      setConnStatus('error', `⚠ ข้อมูลเซนเซอร์ผิดปกติ: ${invalidFields.join(', ')}`);
+      return;
+    }
+
     document.getElementById('valTemp').textContent = Number(d.temperature).toFixed(1);
     document.getElementById('valHum').textContent = Number(d.humidity).toFixed(1);
     document.getElementById('valSmoke').textContent = Math.round(d.smoke);
@@ -1202,8 +1370,13 @@ async function fetchLatest(){
     const prob = Number(d.probability);
     const state = applyState(prob);
 
-    NODE_LAT = Number(d.lat);
-    NODE_LNG = Number(d.lng);
+    // พิกัด lat/lng ผิดปกติได้โดยไม่กระทบข้อมูลเซนเซอร์หลัก จึงแยกตรวจสอบต่างหาก และคงพิกัดเดิมไว้ถ้าค่าใหม่ใช้ไม่ได้
+    if(isValidNumber(d.lat) && isValidNumber(d.lng)){
+      NODE_LAT = Number(d.lat);
+      NODE_LNG = Number(d.lng);
+    } else {
+      console.warn('fetchLatest: พิกัด lat/lng ผิดปกติ ใช้พิกัดล่าสุดที่ถูกต้องแทน', d);
+    }
     updateMapMarker(state, NODE_LAT, NODE_LNG);
 
     [['sparkTemp', d.temperature], ['sparkHum', d.humidity],
@@ -1244,10 +1417,11 @@ async function fetchHistory(){
       const t = new Date(r.timestamp);
       return t.toLocaleTimeString('th-TH',{hour12:false, hour:'2-digit', minute:'2-digit'});
     });
-    trendChart.data.datasets[0].data = rows.map(r=>Number(r.temperature));
-    trendChart.data.datasets[1].data = rows.map(r=>Number(r.humidity));
-    trendChart.data.datasets[2].data = rows.map(r=>Number(r.smoke)/10);
-    trendChart.data.datasets[3].data = rows.map(r=>Number(r.pm25));
+    // ใช้ numOrNull กันแถวที่เซนเซอร์ส่งค่าผิดปกติมา ไม่ให้กราฟลากเส้นเพี้ยนไปที่ 0/NaN
+    trendChart.data.datasets[0].data = rows.map(r=>numOrNull(r.temperature));
+    trendChart.data.datasets[1].data = rows.map(r=>numOrNull(r.humidity));
+    trendChart.data.datasets[2].data = rows.map(r=>{ const n = numOrNull(r.smoke); return n===null ? null : n/10; });
+    trendChart.data.datasets[3].data = rows.map(r=>numOrNull(r.pm25));
     trendChart.update('none');
   }catch(err){
     console.error('fetchHistory error:', err);
@@ -1260,15 +1434,20 @@ async function fetchAlerts(){
     const json = await res.json();
     if(json.status !== 'ok' || !Array.isArray(json.data)) return;
 
-    seedLogs = json.data.map(r=>{
-      const prob = Number(r.probability);
-      const t = new Date(r.timestamp);
-      const timeStr = t.toLocaleTimeString('th-TH',{hour12:false});
-      const type = prob >= 0.8 ? 'fire' : 'watch';
-      const title = type === 'fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE' : 'เข้าสู่สภาวะเฝ้าระวัง';
-      const detail = `T:${Number(r.temperature).toFixed(1)}°C  H:${Number(r.humidity).toFixed(0)}%  Smoke:${Math.round(r.smoke)}  Prob:${prob.toFixed(2)}`;
-      return { type, title, time: timeStr, detail };
-    });
+    seedLogs = json.data
+      .filter(r => isValidNumber(r.probability)) // ตัดแถวที่ไม่มีค่าความน่าจะเป็นที่ใช้งานได้ทิ้งไป กันบันทึกเพี้ยน
+      .map(r=>{
+        const prob = Number(r.probability);
+        const t = new Date(r.timestamp);
+        const timeStr = isNaN(t.getTime()) ? '--:--:--' : t.toLocaleTimeString('th-TH',{hour12:false});
+        const type = prob >= 0.8 ? 'fire' : 'watch';
+        const title = type === 'fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE' : 'เข้าสู่สภาวะเฝ้าระวัง';
+        const tempTxt = isValidNumber(r.temperature) ? Number(r.temperature).toFixed(1) : '--';
+        const humTxt = isValidNumber(r.humidity) ? Number(r.humidity).toFixed(0) : '--';
+        const smokeTxt = isValidNumber(r.smoke) ? Math.round(r.smoke) : '--';
+        const detail = `T:${tempTxt}°C  H:${humTxt}%  Smoke:${smokeTxt}  Prob:${prob.toFixed(2)}`;
+        return { type, title, time: timeStr, detail };
+      });
     renderLogs();
   }catch(err){
     console.error('fetchAlerts error:', err);
@@ -1295,6 +1474,7 @@ function setupDashboard(){
   tickClock();
   setInterval(tickClock, 1000);
   updateSoundButton();
+  updateNotifyButton();
   // กันเหนียว: ถ้าโหลดข้อมูลนานผิดปกติ (เช่นเน็ตหลุด) ให้ซ่อนหน้า loading ออกไปเองหลัง 10 วิ
   setTimeout(hideBootOverlay, 10000);
 
