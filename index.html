@@ -3,285 +3,721 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Forest Guard — ระบบแจ้งเตือนไฟป่า</title>
+<title>Forest Guard — ระบบเตือนภัยไฟป่า</title>
+
+<!-- External Resources -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<style>
-  :root{
-    --bg-void:#f4f8f1;
-    --bg-panel:#ffffff;
-    --bg-panel-raised:#eef5e9;
-    --line:#dbe6d3;
-    --line-soft:#e8f0e2;
-    --ember:#dc2626;
-    --ember-dim:#fee2e2;
-    --amber:#d97706;
-    --amber-dim:#fef3c7;
-    --moss:#16a34a;
-    --moss-dim:#dcfce7;
-    --text-primary:#16241a;
-    --text-muted:#425240;
-    --text-faint:#5c6c58;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{
-    background:var(--bg-void);
-    color:var(--text-primary);
-    font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;
-    min-height:100vh;
-  }
-  .mono{font-family:'JetBrains Mono',monospace;}
 
-  body{
+<style>
+  :root {
+    --bg-void: #f4f8f1;
+    --bg-panel: #ffffff;
+    --bg-panel-raised: #eef5e9;
+    --line: #dbe6d3;
+    --line-soft: #e8f0e2;
+    --ember: #dc2626;
+    --ember-dim: #fee2e2;
+    --amber: #d97706;
+    --amber-dim: #fef3c7;
+    --moss: #16a34a;
+    --moss-dim: #dcfce7;
+    --text-primary: #16241a;
+    --text-muted: #425240;
+    --text-faint: #5c6c58;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif;
+    min-height: 100vh;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  body {
     background-image:
       radial-gradient(ellipse 900px 500px at 15% -10%, rgba(127,166,92,0.08), transparent 60%),
       radial-gradient(ellipse 700px 500px at 100% 0%, rgba(232,100,43,0.06), transparent 60%);
   }
 
-  .app{ width:100%; max-width:1600px; margin:0 auto; padding:10px 10px 36px; }
+  .app {
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 10px 10px 36px;
+  }
 
   /* ===== LOGIN MODAL ===== */
-  .login-overlay{
-    position:fixed; inset:0; z-index:2000;
-    display:none; align-items:center; justify-content:center;
-    background:rgba(22,36,26,0.45);
-    backdrop-filter:blur(6px);
-    -webkit-backdrop-filter:blur(6px);
-    padding:20px;
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(22,36,26,0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 20px;
   }
-  .login-overlay.visible{ display:flex; }
-  .login-card{
-    position:relative;
-    width:100%; max-width:380px;
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:16px;
-    padding:24px 22px 20px;
-    box-shadow:0 20px 50px rgba(22,36,26,0.28);
-  }
-  .login-close{
-    position:absolute; top:10px; right:10px;
-    width:30px; height:30px; border-radius:50%;
-    border:1px solid var(--line); background:var(--bg-panel-raised);
-    color:var(--text-muted); font-size:18px; line-height:1; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .login-close:hover{ background:var(--line); color:var(--text-primary); }
-  .login-brand{ display:flex; align-items:center; gap:12px; margin-bottom:16px; }
-  .login-brand h1{ font-size:16.5px; font-weight:700; }
-  .login-brand p{ font-size:11.5px; color:var(--text-muted); margin-top:2px; }
+  .login-overlay.visible { display: flex; }
 
-  .login-tabs{ display:flex; gap:6px; margin-bottom:14px; background:var(--bg-panel-raised); padding:4px; border-radius:10px; border:1px solid var(--line); }
-  .login-tab{
-    flex:1; text-align:center; padding:9px 10px; border-radius:8px; cursor:pointer;
-    font-size:13px; font-weight:600; color:var(--text-muted); transition:all 0.15s ease; user-select:none;
+  .login-card {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px 22px 20px;
+    box-shadow: 0 20px 50px rgba(22,36,26,0.28);
   }
-  .login-tab.active{ background:var(--bg-panel); color:var(--text-primary); box-shadow:0 0 0 1px var(--line); }
 
-  .login-form{ display:none; flex-direction:column; gap:10px; }
-  .login-form.active{ display:flex; }
-  .login-field label{ display:block; font-size:11.5px; color:var(--text-muted); margin-bottom:6px; letter-spacing:0.02em; }
-  .login-field input{
-    width:100%; padding:11px 13px; border-radius:9px; border:1px solid var(--line);
-    background:var(--bg-panel-raised); color:var(--text-primary); font-family:inherit; font-size:13.5px;
-    outline:none; transition:border-color 0.15s ease;
+  .login-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--bg-panel-raised);
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-  .login-field input:focus{ border-color:var(--moss); }
+  .login-close:hover { background: var(--line); color: var(--text-primary); }
 
-  .pw-show{
-    display:flex; align-items:center; gap:8px; margin-top:8px;
-    font-size:12.5px; color:var(--text-muted); cursor:pointer; user-select:none;
+  .login-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
   }
-  .pw-show input[type="checkbox"]{
-    width:15px; height:15px; accent-color:var(--moss); cursor:pointer;
+  .login-brand h1 { font-size: 16.5px; font-weight: 700; }
+  .login-brand p { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .login-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    background: var(--bg-panel-raised);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
   }
-  .login-btn{
-    margin-top:6px; width:100%; padding:12px; border-radius:9px; border:none;
-    background:linear-gradient(135deg, var(--moss), #3a7a2e); color:#ffffff;
-    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; transition:filter 0.15s ease;
+  .login-tab {
+    flex: 1;
+    text-align: center;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    user-select: none;
   }
-  .login-btn:hover{ filter:brightness(1.08); }
-  .login-error{
-    display:none; font-size:12px; color:var(--ember); background:rgba(239,68,68,0.1);
-    border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:9px 11px; margin-top:2px;
+  .login-tab.active {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 1px var(--line);
   }
-  .login-error.visible{ display:block; }
-  .login-note{ font-size:11px; color:var(--text-faint); margin-top:12px; line-height:1.6; text-align:center; }
+
+  .login-form { display: none; flex-direction: column; gap: 10px; }
+  .login-form.active { display: flex; }
+
+  .login-field label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.02em;
+  }
+  .login-field input {
+    width: 100%;
+    padding: 11px 13px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: var(--bg-panel-raised);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .login-field input:focus { border-color: var(--moss); }
+
+  .pw-show {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .pw-show input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--moss);
+    cursor: pointer;
+  }
+
+  .login-btn {
+    margin-top: 6px;
+    width: 100%;
+    padding: 12px;
+    border-radius: 9px;
+    border: none;
+    background: linear-gradient(135deg, var(--moss), #3a7a2e);
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+  }
+  .login-btn:hover { filter: brightness(1.08); }
+
+  .login-error {
+    display: none;
+    font-size: 12px;
+    color: var(--ember);
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 9px 11px;
+    margin-top: 2px;
+  }
+  .login-error.visible { display: block; }
+
+  .login-note {
+    font-size: 11px;
+    color: var(--text-faint);
+    margin-top: 12px;
+    line-height: 1.6;
+    text-align: center;
+  }
 
   /* ===== BOOT LOADING ===== */
-  .boot-overlay{
-    position:fixed; inset:0; z-index:3000;
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-    background:var(--bg-void);
-    transition:opacity 0.4s ease, visibility 0.4s ease;
+  .boot-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background: var(--bg-void);
+    transition: opacity 0.4s ease, visibility 0.4s ease;
   }
-  .boot-overlay.hidden{ opacity:0; visibility:hidden; pointer-events:none; }
-  .boot-title{ font-size:16px; font-weight:700; letter-spacing:0.06em; color:var(--text-primary); margin-top:2px; }
-  .boot-spinner-row{ display:flex; align-items:center; gap:10px; margin-top:4px; }
-  .boot-spinner{
-    width:16px; height:16px; border-radius:50%;
-    border:2.5px solid var(--line);
-    border-top-color:var(--moss);
-    animation:bootspin 0.85s linear infinite;
+  .boot-overlay.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .boot-title { font-size: 16px; font-weight: 700; letter-spacing: 0.06em; color: var(--text-primary); margin-top: 2px; }
+  .boot-spinner-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+  .boot-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2.5px solid var(--line);
+    border-top-color: var(--moss);
+    animation: bootspin 0.85s linear infinite;
   }
-  @keyframes bootspin{ to{ transform:rotate(360deg); } }
-  .boot-text{ font-size:13px; color:var(--text-muted); }
+  @keyframes bootspin { to { transform: rotate(360deg); } }
+  .boot-text { font-size: 13px; color: var(--text-muted); }
 
-  .topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding:10px 4px 14px; border-bottom:1px solid var(--line); margin-bottom:14px;
-    flex-wrap:wrap; gap:14px;
+  /* ===== TOPBAR ===== */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 4px 14px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 14px;
   }
-  .brand{ display:flex; align-items:center; gap:12px; }
-  .brand-text h1{ font-size:17px; font-weight:700; letter-spacing:0.02em; }
-  .brand-text p{ font-size:12px; color:var(--text-muted); margin-top:2px; }
-  .topbar-right{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  .status-chip{
-    display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-muted);
-    padding:7px 12px; border:1px solid var(--line); border-radius:100px; background:var(--bg-panel);
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-text h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; }
+  .brand-text p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .status-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding: 7px 12px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    background: var(--bg-panel);
   }
-  .role-badge{ font-size:11.5px; font-weight:700; padding:6px 12px; border-radius:100px; letter-spacing:0.03em; }
-  .role-badge.admin{ background:rgba(245,158,11,0.14); color:var(--amber); border:1px solid rgba(245,158,11,0.35); }
-  .role-badge.user{ background:rgba(148,163,184,0.14); color:#94a3b8; border:1px solid rgba(148,163,184,0.3); }
-  .logout-btn{
-    font-size:12px; color:var(--text-muted); background:var(--bg-panel); border:1px solid var(--line);
-    padding:7px 12px; border-radius:100px; cursor:pointer; font-family:inherit;
+  .role-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 100px;
+    letter-spacing: 0.03em;
   }
-  .logout-btn:hover{ border-color:var(--text-faint); color:var(--text-primary); }
-  .dot{ width:7px; height:7px; border-radius:50%; background:var(--moss); flex-shrink:0;
-    box-shadow:0 0 8px var(--moss); animation:pulse 2.4s ease-in-out infinite; }
-  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.45;} }
-  .clock{ font-size:13px; color:var(--text-primary); }
+  .role-badge.admin {
+    background: rgba(245,158,11,0.14);
+    color: var(--amber);
+    border: 1px solid rgba(245,158,11,0.35);
+  }
+  .role-badge.user {
+    background: rgba(148,163,184,0.14);
+    color: #94a3b8;
+    border: 1px solid rgba(148,163,184,0.3);
+  }
+  .logout-btn {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    padding: 7px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .logout-btn:hover { border-color: var(--text-faint); color: var(--text-primary); }
 
-  .grid{
-    display:grid;
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--moss);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--moss);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+  .clock { font-size: 13px; color: var(--text-primary); }
+
+  /* ===== GRID LAYOUT ===== */
+  .grid {
+    display: grid;
     grid-template-columns: minmax(280px, 320px) minmax(420px, 1fr) minmax(260px, 300px);
-    gap:14px; align-items:stretch;
+    gap: 14px;
+    align-items: stretch;
   }
-  @media (max-width: 1100px){ .grid{ grid-template-columns: 1fr; } }
-
-  .panel{ background:var(--bg-panel); border:1px solid var(--line); border-radius:14px; padding:14px; }
-  .panel-label{ font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-faint); font-weight:600; margin-bottom:10px; }
-
-  .gauge-panel{ text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
-  .gauge-wrap{ position:relative; width:250px; height:250px; max-width:100%; aspect-ratio:1/1; margin:2px 0; }
-  #gaugeCanvas{ width:100%; height:100%; display:block; }
-  .gauge-readout{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-  .gauge-pct{ font-family:'JetBrains Mono',monospace; font-size:44px; font-weight:700; line-height:1; }
-  .gauge-pct-label{ font-size:11px; color:var(--text-muted); letter-spacing:0.1em; margin-top:6px; text-transform:uppercase;}
-  .status-pill{
-    margin-top:10px; padding:8px 18px; border-radius:100px;
-    font-size:13.5px; font-weight:600; letter-spacing:0.01em; display:inline-flex; align-items:center; gap:8px;
-  }
-  .status-pill .ring{ width:8px; height:8px; border-radius:50%; }
-
-  .state-normal .status-pill{ background:rgba(34,197,94,0.14); color:var(--moss); border:1px solid rgba(34,197,94,0.3);}
-  .state-normal .status-pill .ring{ background:var(--moss); }
-  .state-watch .status-pill{ background:rgba(245,158,11,0.14); color:var(--amber); border:1px solid rgba(245,158,11,0.35);}
-  .state-watch .status-pill .ring{ background:var(--amber); }
-  .state-fire .status-pill{ background:rgba(239,68,68,0.16); color:var(--ember); border:1px solid rgba(239,68,68,0.4);}
-  .state-fire .status-pill .ring{ background:var(--ember); }
-
-  .gauge-note{ font-size:12px; color:var(--text-faint); margin-top:10px; line-height:1.6; }
-
-  .fire-triangle{ display:flex; justify-content:center; gap:22px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line-soft); width:100%; }
-  .tri-item{ text-align:center; }
-  .tri-item .v{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }
-  .tri-item .l{ font-size:10.5px; color:var(--text-faint); margin-top:3px; letter-spacing:0.04em; }
-
-  .sensor-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
-  .sensor-card{ background:var(--bg-panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; display:flex; align-items:center; gap:12px; }
-  .sensor-info{ flex:1 1 auto; min-width:0; }
-  .sensor-head{ display:flex; align-items:center; gap:7px; margin-bottom:6px;}
-  .sensor-name{ font-size:12px; color:var(--text-muted); font-weight:500;}
-  .sensor-value{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; letter-spacing:-0.01em;}
-  .sensor-unit{ font-size:12px; color:var(--text-faint); margin-left:3px; font-weight:400;}
-  .sensor-range{ font-size:10.5px; color:var(--text-faint); margin-top:3px;}
-
-  .trend-panel{ padding:14px 16px 10px; }
-  .trend-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:10px;}
-  .legend{ display:flex; gap:14px; flex-wrap:wrap; }
-  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); cursor:pointer; user-select:none; transition:opacity 0.15s ease; padding:3px 6px; border-radius:6px; }
-  .legend-item:hover{ background:var(--bg-panel-raised); }
-  .legend-item.is-off{ opacity:0.35; }
-  .legend-dot{ width:9px; height:9px; border-radius:2px; }
-  .chart-holder{ height:220px; margin-top:8px; }
-
-  .log-panel{ display:flex; flex-direction:column; height:100%; }
-  .log-list{ display:flex; flex-direction:column; gap:0; flex:1 1 auto; min-height:0; overflow-y:auto; max-height: 280px; }
-  .log-item{ padding:9px 2px; border-bottom:1px solid var(--line-soft); display:flex; gap:11px; }
-  .log-item:last-child{ border-bottom:none; }
-  .log-marker{ width:8px; height:8px; border-radius:50%; margin-top:5px; flex-shrink:0; }
-  .log-marker.fire{ background:var(--ember); box-shadow:0 0 7px var(--ember);}
-  .log-marker.watch{ background:var(--amber); }
-  .log-marker.normal{ background:var(--moss); }
-  .log-body{ flex:1; }
-  .log-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
-  .log-title{ font-size:13px; font-weight:600; }
-  .log-time{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint); white-space:nowrap;}
-  .log-detail{ font-size:11.5px; color:var(--text-muted); margin-top:3px; font-family:'JetBrains Mono',monospace; }
-
-  .fire-banner, .watch-banner{
-    display:none; flex-direction:column; gap:12px; border-radius:14px; padding:14px 18px; margin-bottom:14px;
-  }
-  .fire-banner{ background:linear-gradient(120deg, #7f1d1d, #b91c1c); border:1px solid rgba(255,255,255,0.15); box-shadow:0 8px 24px rgba(185,28,28,0.35); }
-  .fire-banner.active{ display:flex; animation:bannerPulse 1.8s ease-in-out infinite; }
-  @keyframes bannerPulse{ 0%,100%{ box-shadow:0 8px 24px rgba(185,28,28,0.35);} 50%{ box-shadow:0 8px 34px rgba(239,68,68,0.6);} }
-  .fire-banner-top{ display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; }
-  .fire-banner-text{ display:flex; align-items:center; gap:12px; }
-  .fire-banner-title{ font-size:15px; font-weight:700; color:#fff; }
-  .fire-banner-sub{ font-size:12px; color:rgba(255,255,255,0.8); margin-top:2px; }
-  .fire-banner-actions{ display:flex; gap:8px; flex-wrap:wrap; }
-  .fire-banner-btn{
-    display:inline-flex; align-items:center; gap:7px; background:#7f1d1d; color:#fff; font-weight:700; font-size:13px;
-    padding:9px 16px; border-radius:100px; text-decoration:none; white-space:nowrap; border:1px solid rgba(255,255,255,0.45);
-    transition:background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-  }
-  .fire-banner-btn:hover{ background:#fff; color:#7f1d1d; border-color:#fff; }
-
-  .watch-banner{ background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.45); }
-  .watch-banner.active{ display:flex; }
-  .watch-banner .fire-banner-title{ color:var(--text-primary); }
-  .watch-banner .fire-banner-sub{ color:var(--text-muted); }
-
-  .map-row{ display:grid; grid-template-columns: 1fr minmax(260px, 300px); gap:14px; margin-top:14px; align-items:stretch; }
-  @media (max-width: 1100px){ .map-row{ grid-template-columns: 1fr; } }
-  .map-panel{ padding:14px; }
-  .map-holder{ height:380px; border-radius:10px; overflow:hidden; border:1px solid var(--line); position:relative; }
-
-  .node-panel{ display:flex; flex-direction:column; gap:10px; height:100%; justify-content:space-between; }
-  .node-card{ background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px; padding:11px 13px; display:flex; align-items:center; gap:12px; }
-  .node-marker{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
-  .node-info{ flex:1; }
-  .node-name{ font-size:13px; font-weight:600; }
-  .node-coord{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-faint); margin-top:2px;}
-  .node-state{ font-size:11px; font-weight:600; }
-
-  .bottom-row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:14px; }
-  @media (max-width: 1100px){ .bottom-row{ grid-template-columns:1fr; } }
-
-  .contact-list{ display:flex; flex-direction:column; gap:8px; }
-  .contact-card{ display:flex; align-items:center; gap:12px; background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px; padding:10px 12px; }
-  .contact-info{ flex:1; min-width:0; }
-  .contact-name{ font-size:13px; font-weight:600; }
-  .contact-sub{ font-size:11px; color:var(--text-faint); margin-top:1px; }
-  .contact-number{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text-muted); margin-top:2px; }
-  .call-btn{
-    display:inline-flex; align-items:center; gap:6px; background:rgba(34,197,94,0.14); color:var(--moss); border:1px solid rgba(34,197,94,0.3);
-    font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:100px; text-decoration:none; flex-shrink:0;
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: 1fr; }
   }
 
-  .stats-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:12px; }
-  .stat-card{ background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px; padding:12px 10px; text-align:center; }
-  .stat-value{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; }
-  .stat-label{ font-size:10.5px; color:var(--text-faint); margin-top:4px; line-height:1.4; }
-  
-  .footer-note{ text-align:center; font-size:11.5px; color:var(--text-faint); margin-top:16px; line-height:1.7; }
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .panel-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  /* ===== GAUGE CARD ===== */
+  .gauge-panel {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .gauge-wrap {
+    position: relative;
+    width: 250px;
+    height: 250px;
+    max-width: 100%;
+    aspect-ratio: 1/1;
+    margin: 2px 0;
+  }
+  #gaugeCanvas { width: 100%; height: 100%; display: block; }
+  .gauge-readout {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .gauge-pct {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 44px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .gauge-pct-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-top: 6px;
+    text-transform: uppercase;
+  }
+
+  .status-pill {
+    margin-top: 10px;
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-pill .ring { width: 8px; height: 8px; border-radius: 50%; }
+
+  .state-normal .status-pill {
+    background: rgba(34,197,94,0.14);
+    color: var(--moss);
+    border: 1px solid rgba(34,197,94,0.3);
+  }
+  .state-normal .status-pill .ring { background: var(--moss); }
+
+  .state-watch .status-pill {
+    background: rgba(245,158,11,0.14);
+    color: var(--amber);
+    border: 1px solid rgba(245,158,11,0.35);
+  }
+  .state-watch .status-pill .ring { background: var(--amber); }
+
+  .state-fire .status-pill {
+    background: rgba(239,68,68,0.16);
+    color: var(--ember);
+    border: 1px solid rgba(239,68,68,0.4);
+  }
+  .state-fire .status-pill .ring { background: var(--ember); }
+
+  .gauge-note { font-size: 12px; color: var(--text-faint); margin-top: 10px; line-height: 1.6; }
+
+  .fire-triangle {
+    display: flex;
+    justify-content: center;
+    gap: 22px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+    width: 100%;
+  }
+  .tri-item { text-align: center; }
+  .tri-item .v { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+  .tri-item .l { font-size: 10.5px; color: var(--text-faint); margin-top: 3px; letter-spacing: 0.04em; }
+
+  /* ===== SENSORS CARD ===== */
+  .sensor-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .sensor-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .sensor-info { flex: 1 1 auto; min-width: 0; }
+  .sensor-head { display: flex; align-items: center; gap: 7px; margin-bottom: 6px; }
+  .sensor-name { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+  .sensor-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  .sensor-unit { font-size: 12px; color: var(--text-faint); margin-left: 3px; font-weight: 400; }
+  .sensor-range { font-size: 10.5px; color: var(--text-faint); margin-top: 3px; }
+
+  /* ===== TREND CHART ===== */
+  .trend-panel { padding: 14px 16px 10px; }
+  .trend-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.15s ease;
+    padding: 3px 6px;
+    border-radius: 6px;
+  }
+  .legend-item:hover { background: var(--bg-panel-raised); }
+  .legend-item.is-off { opacity: 0.35; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; }
+  .chart-holder { height: 220px; margin-top: 8px; }
+
+  /* ===== LOG PANEL ===== */
+  .log-panel { display: flex; flex-direction: column; height: 100%; }
+  .log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    max-height: 280px;
+  }
+  .log-item {
+    padding: 9px 2px;
+    border-bottom: 1px solid var(--line-soft);
+    display: flex;
+    gap: 11px;
+  }
+  .log-item:last-child { border-bottom: none; }
+  .log-marker { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .log-marker.fire { background: var(--ember); box-shadow: 0 0 7px var(--ember); }
+  .log-marker.watch { background: var(--amber); }
+  .log-marker.normal { background: var(--moss); }
+  .log-body { flex: 1; }
+  .log-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .log-title { font-size: 13px; font-weight: 600; }
+  .log-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-faint); white-space: nowrap; }
+  .log-detail { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; font-family: 'JetBrains Mono', monospace; }
+
+  /* ===== BANNERS ===== */
+  .fire-banner, .watch-banner {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+  }
+
+  .fire-banner {
+    background: linear-gradient(120deg, #7f1d1d, #b91c1c);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 24px rgba(185,28,28,0.35);
+  }
+  .fire-banner.active {
+    display: flex;
+    animation: bannerPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes bannerPulse {
+    0%, 100% { box-shadow: 0 8px 24px rgba(185,28,28,0.35); }
+    50% { box-shadow: 0 8px 34px rgba(239,68,68,0.6); }
+  }
+
+  .fire-banner-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .fire-banner-text { display: flex; align-items: center; gap: 12px; }
+  .fire-banner-title { font-size: 15px; font-weight: 700; color: #ffffff; }
+  .fire-banner-sub { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+
+  .fire-banner-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .fire-banner-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #7f1d1d;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 100px;
+    text-decoration: none;
+    white-space: nowrap;
+    border: 1px solid rgba(255,255,255,0.45);
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  }
+  .fire-banner-btn:hover {
+    background: #ffffff;
+    color: #7f1d1d;
+    border-color: #ffffff;
+  }
+
+  .watch-banner {
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.45);
+  }
+  .watch-banner.active { display: flex; }
+  .watch-banner .fire-banner-title { color: var(--text-primary); }
+  .watch-banner .fire-banner-sub { color: var(--text-muted); }
+
+  /* ===== MAP & NODES ===== */
+  .map-row {
+    display: grid;
+    grid-template-columns: 1fr minmax(260px, 300px);
+    gap: 14px;
+    margin-top: 14px;
+    align-items: stretch;
+  }
+  @media (max-width: 1100px) {
+    .map-row { grid-template-columns: 1fr; }
+  }
+
+  .map-panel { padding: 14px; }
+  .map-holder {
+    height: 380px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    position: relative;
+  }
+
+  .node-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    justify-content: space-between;
+  }
+  .node-card {
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 11px 13px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .node-marker { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .node-info { flex: 1; }
+  .node-name { font-size: 13px; font-weight: 600; }
+  .node-coord { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--text-faint); margin-top: 2px; }
+  .node-state { font-size: 11px; font-weight: 600; }
+
+  /* ===== BOTTOM ROW ===== */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  @media (max-width: 1100px) {
+    .bottom-row { grid-template-columns: 1fr; }
+  }
+
+  .contact-list { display: flex; flex-direction: column; gap: 8px; }
+  .contact-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 10px 12px;
+  }
+  .contact-info { flex: 1; min-width: 0; }
+  .contact-name { font-size: 13px; font-weight: 600; }
+  .contact-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+  .contact-number { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+
+  .call-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(34,197,94,0.14);
+    color: var(--moss);
+    border: 1px solid rgba(34,197,94,0.3);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 100px;
+    text-decoration: none;
+    flex-shrink: 0;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .stat-card {
+    background: var(--bg-panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 11px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700; }
+  .stat-label { font-size: 10.5px; color: var(--text-faint); margin-top: 4px; line-height: 1.4; }
+
+  .footer-note {
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-faint);
+    margin-top: 16px;
+    line-height: 1.7;
+  }
 </style>
 </head>
 <body>
 
+<!-- Login Modal -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <button class="login-close" onclick="hideLoginModal()">×</button>
+    <div class="login-brand">
+      <div>
+        <h1>Forest Guard Access</h1>
+        <p>เข้าสู่ระบบเพื่อจัดการสิทธิ์และตั้งค่า</p>
+      </div>
+    </div>
+    <div class="login-tabs">
+      <div class="login-tab active" id="tabAdmin" onclick="switchLoginTab('admin')">Admin</div>
+      <div class="login-tab" id="tabUser" onclick="switchLoginTab('user')">General User</div>
+    </div>
+    <form class="login-form active" id="formAdmin" onsubmit="handleLogin(event, 'admin')">
+      <div class="login-field">
+        <label>รหัสผ่านผู้ดูแลระบบ (Admin Password)</label>
+        <input type="password" id="inputAdminPw" placeholder="กรอกรหัสผ่าน Admin..." required>
+      </div>
+      <label class="pw-show">
+        <input type="checkbox" onchange="togglePwVisibility('inputAdminPw')"> แสดงรหัสผ่าน
+      </label>
+      <div class="login-error" id="errAdmin">รหัสผ่านไม่ถูกต้อง</div>
+      <button type="submit" class="login-btn">เข้าสู่ระบบ Admin</button>
+    </form>
+    <form class="login-form" id="formUser" onsubmit="handleLogin(event, 'user')">
+      <div class="login-field">
+        <label>รหัสผ่านผู้ใช้งาน (User Password)</label>
+        <input type="password" id="inputUserPw" placeholder="กรอกรหัสผ่าน User..." required>
+      </div>
+      <label class="pw-show">
+        <input type="checkbox" onchange="togglePwVisibility('inputUserPw')"> แสดงรหัสผ่าน
+      </label>
+      <div class="login-error" id="errUser">รหัสผ่านไม่ถูกต้อง</div>
+      <button type="submit" class="login-btn">เข้าสู่ระบบ User</button>
+    </form>
+    <div class="login-note">
+      หมายเหตุ: สำหรับเจ้าหน้าที่หรือผู้ได้รับอนุญาตเท่านั้น
+    </div>
+  </div>
+</div>
+
+<!-- Boot Overlay -->
 <div class="boot-overlay" id="bootOverlay">
   <div class="boot-title">FOREST GUARD SYSTEM</div>
   <div class="boot-spinner-row">
@@ -291,6 +727,7 @@
 </div>
 
 <div class="app">
+  <!-- Topbar -->
   <div class="topbar">
     <div class="brand">
       <div class="brand-text">
@@ -300,11 +737,13 @@
     </div>
     <div class="topbar-right">
       <div class="status-chip"><span class="dot"></span> Online</div>
+      <span class="role-badge user" id="roleBadge" onclick="showLoginModal()" style="cursor:pointer;" title="คลิกเพื่อสลับสิทธิ์การใช้งาน">USER MODE</span>
+      <button class="logout-btn" id="logoutBtn" style="display:none;" onclick="handleLogout()">ออกจากระบบ</button>
       <div class="clock mono" id="clockDisplay">00:00:00</div>
     </div>
   </div>
 
-  <!-- แบนเนอร์เตือนภัย -->
+  <!-- Banners -->
   <div class="fire-banner" id="fireBanner">
     <div class="fire-banner-top">
       <div class="fire-banner-text">
@@ -330,8 +769,9 @@
     </div>
   </div>
 
+  <!-- Grid Main -->
   <div class="grid">
-    <!-- Panel เกจความเสี่ยง -->
+    <!-- Panel Gauge -->
     <div class="panel gauge-panel state-normal" id="mainGaugeCard">
       <div class="panel-label">ดัชนีความเสี่ยงไฟป่า (Risk Index)</div>
       <div class="gauge-wrap">
@@ -352,7 +792,7 @@
       </div>
     </div>
 
-    <!-- Panel ค่าเซนเซอร์ -->
+    <!-- Panel Sensors -->
     <div class="panel">
       <div class="panel-label">ค่าจากเซนเซอร์ตรวจวัด (Real-time Sensors)</div>
       <div class="sensor-grid">
@@ -389,7 +829,7 @@
       </div>
     </div>
 
-    <!-- Panel ประวัติการแจ้งเตือน -->
+    <!-- Panel Logs -->
     <div class="panel log-panel">
       <div class="panel-label">บันทึกเหตุการณ์ (System Logs)</div>
       <div class="log-list" id="logList">
@@ -407,6 +847,7 @@
     </div>
   </div>
 
+  <!-- Map Row -->
   <div class="map-row">
     <div class="panel map-panel">
       <div class="panel-label">แผนที่พิกัดเซนเซอร์ (Node Location)</div>
@@ -430,6 +871,7 @@
     </div>
   </div>
 
+  <!-- Bottom Row -->
   <div class="bottom-row">
     <div class="panel">
       <div class="panel-label">เบอร์โทรฉุกเฉิน (Emergency Contacts)</div>
@@ -466,211 +908,185 @@
 </div>
 
 <script>
-// ===== CONFIG & SCRIPT =====
-const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSiMhIscM-Rrmy5QyXU2L9K6NfC7T1L-K4_0m2PZt3F3x3B/pub?output=csv'; // ใส่ URL CSV ของคุณที่นี่
+  // ===== SCRIPT FIXED LOGIC ONLY =====
+  const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSiMhIscM-Rrmy5QyXU2L9K6NfC7T1L-K4_0m2PZt3F3x3B/pub?output=csv';
 
-let trendChart = null;
-let leafletMap = null;
-let mapMarker = null;
+  let chartInstance = null;
+  let leafletMap = null;
+  let mapMarker = null;
 
-// อัปเดตนาฬิกา
-function updateClock() {
-  const now = new Date();
-  document.getElementById('clockDisplay').textContent = now.toTimeString().split(' ')[0];
-}
-setInterval(updateClock, 1000);
-updateClock();
+  // Login System Functions
+  function showLoginModal() {
+    document.getElementById('loginOverlay').classList.add('visible');
+  }
+  function hideLoginModal() {
+    document.getElementById('loginOverlay').classList.remove('visible');
+  }
+  function switchLoginTab(tab) {
+    document.getElementById('tabAdmin').classList.toggle('active', tab === 'admin');
+    document.getElementById('tabUser').classList.toggle('active', tab === 'user');
+    document.getElementById('formAdmin').classList.toggle('active', tab === 'admin');
+    document.getElementById('formUser').classList.toggle('active', tab === 'user');
+  }
+  function togglePwVisibility(id) {
+    const el = document.getElementById(id);
+    if (el) el.type = el.type === 'password' ? 'text' : 'password';
+  }
+  function handleLogin(e, role) {
+    e.preventDefault();
+    const badge = document.getElementById('roleBadge');
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (role === 'admin') {
+      badge.textContent = 'ADMIN MODE';
+      badge.className = 'role-badge admin';
+      logoutBtn.style.display = 'inline-block';
+    } else {
+      badge.textContent = 'USER MODE';
+      badge.className = 'role-badge user';
+      logoutBtn.style.display = 'none';
+    }
+    hideLoginModal();
+  }
+  function handleLogout() {
+    const badge = document.getElementById('roleBadge');
+    const logoutBtn = document.getElementById('logoutBtn');
+    badge.textContent = 'USER MODE';
+    badge.className = 'role-badge user';
+    logoutBtn.style.display = 'none';
+  }
 
-// วาด Gauge ความเสี่ยง
-function drawGauge(score) {
-  const canvas = document.getElementById('gaugeCanvas');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0,0,250,250);
+  // 1. ฟังก์ชันคำนวณสภาวะความเสี่ยง (แก้ไข Logic ที่ถูกต้อง)
+  function interpret(temp, hum, smoke) {
+    // คำนวณเปอร์เซ็นต์ความเสี่ยงสะสม (0 - 100)
+    let tempRisk = Math.max(0, (temp - 25) * 2.5);
+    let humRisk = Math.max(0, (70 - hum) * 1.2);
+    let smokeRisk = (smoke / 500) * 40;
+    
+    let score = Math.round(tempRisk + humRisk + smokeRisk);
+    score = Math.min(Math.max(score, 0), 100);
 
-  const cx = 125, cy = 125, r = 90;
-  const startAngle = 0.75 * Math.PI;
-  const endAngle = 2.25 * Math.PI;
+    // กำหนดสถานะตามเกณฑ์ที่ถูกต้อง
+    let state = 'NORMAL';
+    if (temp >= 42 || smoke >= 350 || score >= 75) {
+      state = 'FIRE';
+    } else if (temp >= 37 || smoke >= 180 || score >= 45) {
+      state = 'WATCH';
+    }
 
-  // วงเกจพื้นหลัง
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, endAngle);
-  ctx.lineWidth = 16;
-  ctx.strokeStyle = '#e8f0e2';
-  ctx.lineCap = 'round';
-  ctx.stroke();
+    return { score, state };
+  }
 
-  // วงเกจแสดงระดับ
-  const pct = Math.min(Math.max(score, 0), 100) / 100;
-  const currentAngle = startAngle + (endAngle - startAngle) * pct;
+  // 2. ฟังก์ชันอัปเดต UI (แก้ไขการสลับ Class สีและข้อความให้ถูกต้องไม่ค้าง)
+  function updateDashboard(temp, hum, smoke) {
+    const { score, state } = interpret(temp, hum, smoke);
 
-  let color = '#16a34a'; // เขียว
-  if(score >= 70) color = '#dc2626'; // แดง
-  else if(score >= 40) color = '#d97706'; // ส้ม
+    // อัปเดตตัวเลขบนหน้าจอ
+    document.getElementById('valTemp').textContent = temp.toFixed(1);
+    document.getElementById('valHum').textContent = hum.toFixed(1);
+    document.getElementById('valSmoke').textContent = Math.round(smoke);
 
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startAngle, currentAngle);
-  ctx.lineWidth = 16;
-  ctx.strokeStyle = color;
-  ctx.lineCap = 'round';
-  ctx.stroke();
-}
+    document.getElementById('triTemp').textContent = `${temp.toFixed(1)} °C`;
+    document.getElementById('triHum').textContent = `${hum.toFixed(1)} %`;
+    document.getElementById('triSmoke').textContent = `${Math.round(smoke)} ppm`;
 
-// สร้าง Chart
-function initChart() {
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  trendChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: [],
-      datasets: [
-        { label: 'อุณหภูมิ (°C)', data: [], borderColor: '#dc2626', backgroundColor: 'rgba(220,38,38,0.1)', fill: true, tension: 0.3 },
-        { label: 'ความชื้น (%)', data: [], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.1)', fill: true, tension: 0.3 },
-        { label: 'ควัน (PPM)', data: [], borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,0.1)', fill: true, tension: 0.3 }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: true } },
-      scales: {
-        x: { grid: { display: false } },
-        y: { beginAtZero: true }
+    document.getElementById('riskPct').textContent = `${score}%`;
+    drawGauge(score);
+
+    // การจัดการ Class UI (รีเซ็ตก่อนเปลี่ยนสภาวะ)
+    const cardState = document.getElementById('mainGaugeCard');
+    const fireBanner = document.getElementById('fireBanner');
+    const watchBanner = document.getElementById('watchBanner');
+    const statusText = document.getElementById('statusText');
+    const nodeMarker = document.getElementById('nodeMarker');
+    const nodeStateText = document.getElementById('nodeStateText');
+
+    // ลบคลาสเตือนภัยเก่าออกเสมอ
+    if(cardState) {
+      cardState.classList.remove('state-normal', 'state-watch', 'state-fire');
+    }
+    if(fireBanner) fireBanner.classList.remove('active');
+    if(watchBanner) watchBanner.classList.remove('active');
+
+    // อัปเดตตามสถานะจริง
+    if (state === 'FIRE') {
+      if(cardState) cardState.classList.add('state-fire');
+      if(fireBanner) fireBanner.classList.add('active');
+      if(statusText) statusText.textContent = '🔥 วิกฤต: ตรวจพบไฟป่า!';
+      if(nodeMarker) nodeMarker.style.background = 'var(--ember)';
+      if(nodeStateText) {
+        nodeStateText.style.color = 'var(--ember)';
+        nodeStateText.textContent = 'สถานะ: วิกฤต (FIRE)';
+      }
+    } else if (state === 'WATCH') {
+      if(cardState) cardState.classList.add('state-watch');
+      if(watchBanner) watchBanner.classList.add('active');
+      if(statusText) statusText.textContent = '⚠️ เฝ้าระวังความเสี่ยง';
+      if(nodeMarker) nodeMarker.style.background = 'var(--amber)';
+      if(nodeStateText) {
+        nodeStateText.style.color = 'var(--amber)';
+        nodeStateText.textContent = 'สถานะ: เฝ้าระวัง (WATCH)';
+      }
+    } else {
+      if(cardState) cardState.classList.add('state-normal');
+      if(statusText) statusText.textContent = 'สภาวะปกติ';
+      if(nodeMarker) nodeMarker.style.background = 'var(--moss)';
+      if(nodeStateText) {
+        nodeStateText.style.color = 'var(--moss)';
+        nodeStateText.textContent = 'สถานะ: ปกติ (NORMAL)';
       }
     }
+  }
+
+  // 3. ฟังก์ชันวาด Gauge
+  function drawGauge(score) {
+    const canvas = document.getElementById('gaugeCanvas');
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, 250, 250);
+
+    const cx = 125, cy = 125, r = 90;
+    const startAngle = 0.75 * Math.PI;
+    const endAngle = 2.25 * Math.PI;
+
+    // พื้นหลัง
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.lineWidth = 16;
+    ctx.strokeStyle = '#e8f0e2';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // เส้นบอกระดับความเสี่ยง
+    const pct = Math.min(Math.max(score, 0), 100) / 100;
+    const currentAngle = startAngle + (endAngle - startAngle) * pct;
+
+    let color = '#16a34a';
+    if(score >= 70) color = '#dc2626';
+    else if(score >= 40) color = '#d97706';
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, currentAngle);
+    ctx.lineWidth = 16;
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+
+  // นาฬิกา
+  setInterval(() => {
+    const clockEl = document.getElementById('clockDisplay');
+    if(clockEl) clockEl.textContent = new Date().toTimeString().split(' ')[0];
+  }, 1000);
+
+  // เริ่มการทำงานระบบ
+  window.addEventListener('DOMContentLoaded', () => {
+    // ปิด Overlay หน้าโหลด
+    const bootOverlay = document.getElementById('bootOverlay');
+    if(bootOverlay) bootOverlay.classList.add('hidden');
+
+    // ทดสอบส่งค่าปกติเข้าไปประมวลผล
+    updateDashboard(30.0, 60.0, 50.0);
   });
-}
-
-// สร้าง Map
-function initMap() {
-  leafletMap = L.map('mapHolder').setView([18.7883, 98.9853], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-    attribution: '© OpenStreetMap'
-  }).addTo(leafletMap);
-
-  mapMarker = L.marker([18.7883, 98.9853]).addTo(leafletMap)
-    .bindPopup('<b>Node 01</b><br>สถานะ: กำลังตรวจสอบ...')
-    .openPopup();
-}
-
-// คำนวณความเสี่ยง และ ตรวจสอบสถานะ (FIXED LOGIC HERE!)
-function evaluateSensorData(temp, hum, smoke) {
-  // 1. คำนวณ Risk Index (0 - 100)
-  // อุณหภูมิสูง + ควันสูง + ความชื้นต่ำ = ความเสี่ยงสูง
-  let tempRisk = Math.max(0, (temp - 25) * 2.5); // เกิน 25°C เริ่มคิดความเสี่ยง
-  let humRisk = Math.max(0, (70 - hum) * 1.2);    // ชื้นต่ำกว่า 70% เริ่มคิดความเสี่ยง
-  let smokeRisk = (smoke / 500) * 40;              // ควันสะสม
-
-  let totalRisk = Math.round(tempRisk + humRisk + smokeRisk);
-  totalRisk = Math.min(Math.max(totalRisk, 0), 100);
-
-  // 2. กำหนดเกณฑ์สภาวะ (Thresholds)
-  // FIRE: อุณหภูมิ >= 42°C หรือ ควัน >= 350 PPM หรือ Risk >= 75%
-  // WATCH: อุณหภูมิ >= 37°C หรือ ควัน >= 180 PPM หรือ Risk >= 45%
-  let state = 'NORMAL';
-  if (temp >= 42 || smoke >= 350 || totalRisk >= 75) {
-    state = 'FIRE';
-  } else if (temp >= 37 || smoke >= 180 || totalRisk >= 45) {
-    state = 'WATCH';
-  }
-
-  return { riskScore: totalRisk, state: state };
-}
-
-// อัปเดต UI หน้าเว็บ
-function updateUI(temp, hum, smoke) {
-  // อัปเดตค่าตัวเลข
-  document.getElementById('valTemp').textContent = temp.toFixed(1);
-  document.getElementById('valHum').textContent = hum.toFixed(1);
-  document.getElementById('valSmoke').textContent = Math.round(smoke);
-
-  document.getElementById('triTemp').textContent = `${temp.toFixed(1)} °C`;
-  document.getElementById('triHum').textContent = `${hum.toFixed(1)} %`;
-  document.getElementById('triSmoke').textContent = `${Math.round(smoke)} ppm`;
-
-  // คำนวณสถานะ
-  const result = evaluateSensorData(temp, hum, smoke);
-  const score = result.riskScore;
-  const state = result.state;
-
-  document.getElementById('riskPct').textContent = `${score}%`;
-  drawGauge(score);
-
-  // รีเซ็ตคลาส UI ก่อนเปลี่ยนสภาวะ
-  const mainCard = document.getElementById('mainGaugeCard');
-  const fireBanner = document.getElementById('fireBanner');
-  const watchBanner = document.getElementById('watchBanner');
-  const statusText = document.getElementById('statusText');
-  const nodeMarker = document.getElementById('nodeMarker');
-  const nodeStateText = document.getElementById('nodeStateText');
-
-  mainCard.classList.remove('state-normal', 'state-watch', 'state-fire');
-  fireBanner.classList.remove('active');
-  watchBanner.classList.remove('active');
-
-  if (state === 'FIRE') {
-    mainCard.classList.add('state-fire');
-    fireBanner.classList.add('active');
-    statusText.textContent = '🔥 วิกฤต: ตรวจพบไฟป่า!';
-    nodeMarker.style.background = 'var(--ember)';
-    nodeStateText.style.color = 'var(--ember)';
-    nodeStateText.textContent = 'สถานะ: วิกฤต (FIRE)';
-  } else if (state === 'WATCH') {
-    mainCard.classList.add('state-watch');
-    watchBanner.classList.add('active');
-    statusText.textContent = '⚠️ เฝ้าระวังความเสี่ยง';
-    nodeMarker.style.background = 'var(--amber)';
-    nodeStateText.style.color = 'var(--amber)';
-    nodeStateText.textContent = 'สถานะ: เฝ้าระวัง (WATCH)';
-  } else {
-    mainCard.classList.add('state-normal');
-    statusText.textContent = 'สภาวะปกติ';
-    nodeMarker.style.background = 'var(--moss)';
-    nodeStateText.style.color = 'var(--moss)';
-    nodeStateText.textContent = 'สถานะ: ปกติ (NORMAL)';
-  }
-}
-
-// จำลองข้อมูลทำงาน (กรณีเชื่อม Sheets ไม่ได้ หรือเริ่มต้น)
-function processData(temp, hum, smoke) {
-  updateUI(temp, hum, smoke);
-
-  // สรุปสถิติ
-  document.getElementById('statMaxTemp').textContent = `${temp.toFixed(1)}°`;
-  document.getElementById('statMinHum').textContent = `${hum.toFixed(1)}%`;
-  document.getElementById('statMaxSmoke').textContent = `${Math.round(smoke)}`;
-
-  // เพิ่มข้อมูลใน Chart
-  const timeStr = new Date().toLocaleTimeString().split(' ')[0];
-  if(trendChart) {
-    if(trendChart.data.labels.length > 10) {
-      trendChart.data.labels.shift();
-      trendChart.data.datasets.forEach(ds => ds.data.shift());
-    }
-    trendChart.data.labels.push(timeStr);
-    trendChart.data.datasets[0].data.push(temp);
-    trendChart.data.datasets[1].data.push(hum);
-    trendChart.data.datasets[2].data.push(smoke);
-    trendChart.update();
-  }
-
-  // ปิดหน้าจอ โหลดเริ่มต้น
-  document.getElementById('bootOverlay').classList.add('hidden');
-}
-
-// เริ่มการทำงานทั้งหมดเมื่อโหลดหน้าเว็บ
-window.addEventListener('DOMContentLoaded', () => {
-  initChart();
-  initMap();
-
-  // กำหนดเวลาเริ่มต้นใน Log
-  document.getElementById('initTime').textContent = new Date().toLocaleTimeString().split(' ')[0];
-
-  // ตัวอย่างทดสอบค่าปกติ (อุณหภูมิ 31°C, ความชื้น 65%, ควัน 45 PPM)
-  // หากดึงค่าจริงจากเซนเซอร์ ให้เรียกใช้ฟังก์ชัน processData(temp, hum, smoke) ได้เลยครับ
-  processData(31.5, 65.0, 45.0);
-});
 </script>
 </body>
 </html>
