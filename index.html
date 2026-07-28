@@ -1580,11 +1580,14 @@ function updateConfirmedState(state, label){
   lastKnownState = state;
 }
 
-function applyState(prob){
+// [แก้ไข] เปลี่ยนมารับ riskLevel (0/1/2 จาก Google Sheet) เป็นตัวตัดสิน state
+// โดยตรง — prob (ความมั่นใจของโมเดล) ใช้แค่โชว์เป็นตัวเลข % บนเกจเท่านั้น ไม่ใช้
+// ตัดสินว่าเป็นไฟป่าหรือไม่อีกต่อไป (ดูเหตุผลเต็มๆ ที่คอมเมนต์ใน fetchLatest())
+function applyState(riskLevel, prob){
   const panel = document.getElementById('gaugePanel');
   let state, label, fuel, ox, heat;
-  if(prob >= 0.8){ state='fire'; label='สภาวะไฟป่า'; fuel='วิกฤต'; ox='ปกติ'; heat='สูงมาก'; }
-  else if(prob >= 0.5){ state='watch'; label='สภาวะเฝ้าระวัง'; fuel='เริ่มเสี่ยง'; ox='ปกติ'; heat='สูงขึ้น'; }
+  if(riskLevel === 2){ state='fire'; label='สภาวะไฟป่า'; fuel='วิกฤต'; ox='ปกติ'; heat='สูงมาก'; }
+  else if(riskLevel === 1){ state='watch'; label='สภาวะเฝ้าระวัง'; fuel='เริ่มเสี่ยง'; ox='ปกติ'; heat='สูงขึ้น'; }
   else { state='normal'; label='สภาวะปกติ'; fuel='ปกติ'; ox='ปกติ'; heat='ปกติ'; }
 
   panel.classList.remove('state-normal','state-watch','state-fire');
@@ -1654,7 +1657,8 @@ async function fetchLatest(){
       'ความชื้น': d.humidity,
       'ควัน': d.smoke,
       'ฝุ่น PM2.5': d.pm25,
-      'ความน่าจะเป็นไฟป่า': d.probability
+      'ระดับความเสี่ยง': d.risk_level,
+      'ความมั่นใจของโมเดล': d.probability
     };
     const invalidFields = Object.entries(fieldChecks)
       .filter(([, v]) => !isValidNumber(v))
@@ -1675,8 +1679,14 @@ async function fetchLatest(){
     document.getElementById('valPM').textContent = Number(d.pm25).toFixed(1);
     updatePowerText(d);
 
+    // [แก้ไข] ตัดสิน state จาก risk_level (0=Normal,1=Warning,2=Fire) โดยตรง
+    // ไม่ใช้ probability มาตัดสินอีกต่อไป — probability คือ "ความมั่นใจของโมเดล
+    // ในคลาสที่ทำนายได้" เท่านั้น ถ้าโมเดลมั่นใจว่าเป็น NORMAL สูง (เช่น 86%)
+    // ค่านี้ก็จะสูงตามไปด้วย ไม่ได้แปลว่าเสี่ยงไฟป่าเลย (สอดคล้องกับ Google Apps
+    // Script ที่แก้ไขให้ตัดสินจาก risk_level เหมือนกันแล้ว)
+    const riskLevel = Number(d.risk_level);
     const prob = Number(d.probability);
-    const state = applyState(prob);
+    const state = applyState(riskLevel, prob);
 
     // พิกัด lat/lng ผิดปกติได้โดยไม่กระทบข้อมูลเซนเซอร์หลัก จึงแยกตรวจสอบต่างหาก และคงพิกัดเดิมไว้ถ้าค่าใหม่ใช้ไม่ได้
     if(isValidNumber(d.lat) && isValidNumber(d.lng)){
@@ -1758,17 +1768,21 @@ async function fetchAlerts(){
     if(json.status !== 'ok' || !Array.isArray(json.data)) return;
 
     seedLogs = json.data
-      .filter(r => isValidNumber(r.probability)) // ตัดแถวที่ไม่มีค่าความน่าจะเป็นที่ใช้งานได้ทิ้งไป กันบันทึกเพี้ยน
+      .filter(r => isValidNumber(r.risk_level)) // ตัดแถวที่ไม่มีค่า risk_level ที่ใช้งานได้ทิ้งไป กันบันทึกเพี้ยน
       .map(r=>{
-        const prob = Number(r.probability);
+        const risk = Number(r.risk_level);
+        const prob = isValidNumber(r.probability) ? Number(r.probability) : 0;
         const t = new Date(r.timestamp);
         const timeStr = isNaN(t.getTime()) ? '--:--:--' : t.toLocaleTimeString('th-TH',{hour12:false});
-        const type = prob >= 0.8 ? 'fire' : 'watch';
+        // [แก้ไข] แยกประเภท fire/watch จาก risk_level โดยตรง ไม่ใช้ probability
+        // (เหตุผลเดียวกับจุดอื่นทั้งหมด — probability คือความมั่นใจของโมเดล
+        // ไม่ใช่ตัวชี้วัดความเสี่ยงไฟป่า)
+        const type = risk >= 2 ? 'fire' : 'watch';
         const title = type === 'fire' ? 'ตรวจพบสภาวะไฟป่า — แจ้งเตือนผ่าน LINE' : 'เข้าสู่สภาวะเฝ้าระวัง';
         const tempTxt = isValidNumber(r.temperature) ? Number(r.temperature).toFixed(1) : '--';
         const humTxt = isValidNumber(r.humidity) ? Number(r.humidity).toFixed(0) : '--';
         const smokeTxt = isValidNumber(r.smoke) ? Math.round(r.smoke) : '--';
-        const detail = `T:${tempTxt}°C  H:${humTxt}%  Smoke:${smokeTxt}  Prob:${prob.toFixed(2)}`;
+        const detail = `T:${tempTxt}°C  H:${humTxt}%  Smoke:${smokeTxt}  ความมั่นใจ:${prob.toFixed(2)}`;
         return { type, title, time: timeStr, detail };
       });
     renderLogs();
@@ -1889,15 +1903,15 @@ function setupDashboard(){
     <div class="popup-row">สถานะ: ปกติ</div>
   `);
 
-  applyState(0);
+  applyState(0, 0);
 
   /* ---------- simulate button (admin only) ---------- */
   document.getElementById('simBtn')?.addEventListener('click', ()=>{
     const roll = Math.random();
-    let temp, hum, smoke, pm, prob;
-    if(roll < 0.6){ temp=(24+Math.random()*11).toFixed(1); hum=(45+Math.random()*40).toFixed(1); smoke=Math.round(200+Math.random()*500); pm=(10+Math.random()*40).toFixed(1); prob=Math.random()*0.4; }
-    else if(roll < 0.85){ temp=(36.5+Math.random()*8.4).toFixed(1); hum=(30+Math.random()*15).toFixed(1); smoke=Math.round(1220+Math.random()*750); pm=(60+Math.random()*60).toFixed(1); prob=0.5+Math.random()*0.3; }
-    else { temp=(45.5+Math.random()*14).toFixed(1); hum=(10+Math.random()*20).toFixed(1); smoke=Math.round(2000+Math.random()*2000); pm=(100+Math.random()*150).toFixed(1); prob=0.8+Math.random()*0.2; }
+    let temp, hum, smoke, pm, prob, risk;
+    if(roll < 0.6){ temp=(24+Math.random()*11).toFixed(1); hum=(45+Math.random()*40).toFixed(1); smoke=Math.round(200+Math.random()*500); pm=(10+Math.random()*40).toFixed(1); prob=Math.random()*0.4; risk=0; }
+    else if(roll < 0.85){ temp=(36.5+Math.random()*8.4).toFixed(1); hum=(30+Math.random()*15).toFixed(1); smoke=Math.round(1220+Math.random()*750); pm=(60+Math.random()*60).toFixed(1); prob=0.5+Math.random()*0.3; risk=1; }
+    else { temp=(45.5+Math.random()*14).toFixed(1); hum=(10+Math.random()*20).toFixed(1); smoke=Math.round(2000+Math.random()*2000); pm=(100+Math.random()*150).toFixed(1); prob=0.8+Math.random()*0.2; risk=2; }
 
     document.getElementById('valTemp').textContent = temp;
     document.getElementById('valHum').textContent = hum;
@@ -1908,7 +1922,7 @@ function setupDashboard(){
     lastKnownTemp = Number(temp);
     refreshConnAge();
 
-    const state = applyState(prob);
+    const state = applyState(risk, prob);
 
     const jitLat = NODE_LAT + (Math.random()-0.5)*0.0006;
     const jitLng = NODE_LNG + (Math.random()-0.5)*0.0006;
