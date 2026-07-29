@@ -41,7 +41,7 @@
       radial-gradient(ellipse 700px 500px at 100% 0%, rgba(232,100,43,0.06), transparent 60%);
   }
 
-  .app{ width:100%; max-width:1600px; margin:0 auto; padding:10px 10px 36px; }
+  .app{ width:100%; max-width:1440px; margin:0 auto; padding:10px 16px 36px; }
 
   /* ===== LOGIN MODAL (สำหรับ Admin เท่านั้น) ===== */
   .login-overlay{
@@ -270,11 +270,16 @@
 
   .grid{
     display:grid;
-    grid-template-columns: minmax(280px, 320px) minmax(420px, 1fr) minmax(260px, 300px);
+    grid-template-columns: minmax(0, 300px) minmax(0, 1fr) minmax(0, 280px);
     gap:14px;
     align-items:stretch;
   }
-  @media (max-width: 1100px){ .grid{ grid-template-columns: 1fr; } }
+  /* Tablet: 2 คอลัมน์ — gauge+log ซ้าย, trend ขวา */
+  @media (max-width: 1100px){
+    .grid{ grid-template-columns: minmax(0, 320px) 1fr; }
+  }
+  /* Mobile: 1 คอลัมน์ */
+  @media (max-width: 700px){ .grid{ grid-template-columns: 1fr; } }
 
   .panel{
     background:var(--bg-panel);
@@ -288,7 +293,7 @@
   }
 
   .gauge-panel{ text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:space-between; }
-  .gauge-wrap{ position:relative; width:250px; height:250px; max-width:100%; aspect-ratio:1/1; margin:2px 0; }
+  .gauge-wrap{ position:relative; width:min(250px, 100%); height:auto; aspect-ratio:1/1; max-width:260px; margin:2px auto; }
   #gaugeCanvas{ width:100%; height:100%; display:block; }
   .gauge-readout{
     position:absolute; inset:0; display:flex; flex-direction:column;
@@ -438,7 +443,7 @@
   }
 
   .bottom-row{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:14px; }
-  @media (max-width: 1100px){ .bottom-row{ grid-template-columns:1fr; } }
+  @media (max-width: 900px){ .bottom-row{ grid-template-columns:1fr; } }
 
   .contact-list{ display:flex; flex-direction:column; gap:8px; }
   .contact-card{
@@ -485,40 +490,64 @@
     .contact-card{ padding:10px 12px; }
   }
 
-  @media (max-width: 640px){
-    .app{ padding:14px 12px 40px; }
+  /* ===== TABLET (700–1100px): 2-column grid ===== */
+  @media (max-width: 1100px) and (min-width: 701px){
+    /* log panel span full width in 2-col grid */
+    .log-panel{ grid-column: 1 / -1; max-height:320px; }
+    .log-list{ max-height:240px; }
+    .gauge-wrap{ width:200px; height:200px; }
+    .gauge-pct{ font-size:38px; }
+    .chart-holder{ height:200px; }
+    .map-holder{ height:320px; }
+  }
+
+  /* ===== MOBILE (<700px): 1-column ===== */
+  @media (max-width: 700px){
+    .app{ padding:12px 10px 36px; }
     .brand-mark{ width:32px; height:32px; font-size:16px; }
     .brand-text h1{ font-size:14.5px; }
     .brand-text p{ font-size:10.5px; }
-    .topbar{ padding:10px 2px 16px; margin-bottom:16px; }
-    .topbar-right{ gap:10px; width:100%; justify-content:space-between; }
-    .status-chip{ font-size:11px; padding:6px 10px; }
+    .topbar{ padding:10px 4px 12px; margin-bottom:12px; flex-wrap:nowrap; gap:8px; }
+    .topbar-left{ flex-shrink:0; }
+    .topbar-right{ gap:6px; flex-shrink:0; flex-wrap:nowrap; }
+    /* ซ่อนปุ่มข้อความยาวบนมือถือ — ใช้ hamburger menu แทน */
+    #adminLoginBtn,
+    #notifyToggleBtn,
+    #soundToggleBtn .btn-text{ display:none; }
+    .status-chip{ font-size:11px; padding:5px 9px; }
     .clock{ font-size:12px; }
-    .grid{ gap:14px; }
-    .panel{ padding:16px; border-radius:12px; }
-    .sensor-grid{ grid-template-columns:1fr; gap:10px; }
-    .sensor-card{ padding:12px 14px; gap:12px; }
+    .grid{ gap:12px; }
+    .panel{ padding:14px; border-radius:12px; }
+    .sensor-grid{ grid-template-columns:1fr 1fr; gap:8px; }
+    .sensor-card{ padding:10px 12px; gap:8px; }
     .sensor-value{ font-size:20px; }
-    .spark-wrap{ flex-basis:90px; width:90px; }
+    .spark-wrap{ flex-basis:74px; width:74px; }
     .spark{ height:38px; }
-    .gauge-wrap{ width:210px; height:210px; }
+    .gauge-wrap{ width:200px; height:200px; }
     .gauge-pct{ font-size:36px; }
     .fire-triangle{ gap:12px; }
     .chart-holder{ height:190px; }
-    .map-holder{ height:240px; }
-    .map-row{ gap:14px; margin-top:14px; }
+    .map-holder{ height:260px; }
+    .map-row{ gap:12px; margin-top:12px; }
     .node-card{ padding:11px 12px; }
-    .log-list{ max-height:340px; flex:0 0 auto; }
+    .log-list{ max-height:300px; flex:0 0 auto; }
+    .week-chip{ min-width:60px; padding:7px 4px; }
+    .week-chip .wc-val{ font-size:13px; }
   }
-  @media (max-width: 380px){ .spark-wrap{ flex-basis:74px; width:74px; } }
 
-  .map-row{ display:grid; grid-template-columns: 1fr minmax(260px, 300px); gap:14px; margin-top:14px; align-items:stretch; }
-  @media (max-width: 1100px){ .map-row{ grid-template-columns: 1fr; } }
+  @media (max-width: 480px){
+    /* sensor-grid: 1 col on very small */
+    .sensor-grid{ grid-template-columns:1fr; }
+    .spark-wrap{ flex-basis:80px; width:80px; }
+  }
+  @media (max-width: 380px){ .spark-wrap{ flex-basis:64px; width:64px; } }
+
+  .map-row{ display:grid; grid-template-columns: 1fr minmax(0, 300px); gap:14px; margin-top:14px; align-items:stretch; }
+  @media (max-width: 900px){ .map-row{ grid-template-columns: 1fr; } }
   .map-panel{ padding:14px; }
   .map-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:10px;}
   .map-holder{ height:380px; border-radius:10px; overflow:hidden; border:1px solid var(--line); position:relative; }
   @media (min-width: 1101px) and (max-width: 1300px){ .map-holder{ height:340px; } }
-  @media (min-width: 641px) and (max-width: 1100px){ .map-holder{ height:300px; } }
   .leaflet-container{ background:#e5e3df !important; font-family:'IBM Plex Sans Thai',sans-serif; }
   .gps-fix{
     display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-muted);
