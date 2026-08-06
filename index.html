@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Forest Guard — ระบบแจ้งเตือนไฟป่า</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -30,10 +30,10 @@
   html,body{
     background:var(--bg-void);
     color:var(--text-primary);
-    font-family:'IBM Plex Sans Thai','Noto Sans Thai',sans-serif;
+    font-family:'Sarabun','Noto Sans Thai',sans-serif;
     min-height:100vh;
   }
-  .mono{font-family:'JetBrains Mono',monospace;}
+  .mono{font-family:'Sarabun',sans-serif;}
 
   body{
     background-image:
@@ -256,16 +256,42 @@
   .drawer-foot{ padding:12px 14px; border-top:1px solid var(--line); font-size:11px; color:var(--text-faint); }
   body.drawer-locked{ overflow:hidden; }
 
-  .week-chip-row{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px; }
-  .week-chip{
-    flex:1; min-width:74px; text-align:center; padding:8px 6px; border-radius:10px;
-    border:1px solid var(--line); background:var(--bg-panel-raised);
+  /* [แก้ไข] เปลี่ยนจาก week-chip (การ์ดเล็กเรียงแถวเดียว ข้อมูลน้อย ช่องว่างเยอะ)
+     เป็น day-card แบบ grid ที่ปรับจำนวนคอลัมน์อัตโนมัติตามพื้นที่หน้าจอ แต่ละ
+     การ์ดแสดงค่าสรุปครบ + สัดส่วนความเสี่ยง (Normal/Warning/Fire) ของวันนั้น */
+  .day-card-grid{
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(148px, 1fr));
+    gap:10px; margin:10px 0 4px;
   }
-  .week-chip .wc-day{ font-size:10.5px; color:var(--text-faint); margin-bottom:3px; }
-  .week-chip .wc-val{ font-size:14px; font-weight:700; font-family:'JetBrains Mono',monospace; }
-  .week-chip.risk-normal .wc-val{ color:var(--moss); }
-  .week-chip.risk-watch .wc-val{ color:var(--amber); }
-  .week-chip.risk-fire .wc-val{ color:var(--ember); }
+  .day-card{
+    padding:12px 12px 11px; border-radius:12px;
+    border:1px solid var(--line); background:var(--bg-panel-raised);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .day-card.is-today{ border-color:var(--moss); box-shadow:0 0 0 1px var(--moss) inset; }
+  .day-card-head{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+  .day-card .dc-day{ font-size:12.5px; font-weight:700; color:var(--text-primary); }
+  .day-card .dc-badge{
+    font-size:10px; font-weight:700; padding:2px 7px; border-radius:100px; white-space:nowrap;
+  }
+  .day-card.risk-normal .dc-badge{ background:var(--moss-dim); color:var(--moss); }
+  .day-card.risk-watch  .dc-badge{ background:var(--amber-dim); color:var(--amber); }
+  .day-card.risk-fire   .dc-badge{ background:var(--ember-dim); color:var(--ember); }
+
+  .dc-stats{ display:grid; grid-template-columns:1fr 1fr; gap:5px 8px; }
+  .dc-stat{ display:flex; flex-direction:column; }
+  .dc-stat .dc-label{ font-size:9.5px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.04em; }
+  .dc-stat .dc-value{ font-size:13px; font-weight:700; font-family:'Sarabun',sans-serif; color:var(--text-primary); }
+
+  .dc-risk-bar{ height:7px; border-radius:100px; overflow:hidden; display:flex; background:var(--bg-panel); }
+  .dc-risk-bar span{ height:100%; }
+  .dc-risk-bar .seg-normal{ background:var(--moss); }
+  .dc-risk-bar .seg-watch{ background:var(--amber); }
+  .dc-risk-bar .seg-fire{ background:var(--ember); }
+  .dc-risk-legend{ display:flex; justify-content:space-between; font-size:9.5px; color:var(--text-faint); font-family:'Sarabun',sans-serif; }
+  .dc-risk-legend .lg-normal{ color:var(--moss); }
+  .dc-risk-legend .lg-watch{ color:var(--amber); }
+  .dc-risk-legend .lg-fire{ color:var(--ember); }
 
 
   .grid{
@@ -299,7 +325,7 @@
     position:absolute; inset:0; display:flex; flex-direction:column;
     align-items:center; justify-content:center;
   }
-  .gauge-pct{ font-family:'JetBrains Mono',monospace; font-size:44px; font-weight:700; line-height:1; }
+  .gauge-pct{ font-family:'Sarabun',sans-serif; font-size:44px; font-weight:700; line-height:1; }
   .gauge-pct-label{ font-size:11px; color:var(--text-muted); letter-spacing:0.1em; margin-top:6px; text-transform:uppercase;}
   .status-pill{
     margin-top:10px; padding:8px 18px; border-radius:100px;
@@ -322,7 +348,7 @@
     padding-top:12px; border-top:1px solid var(--line-soft); width:100%;
   }
   .tri-item{ text-align:center; }
-  .tri-item .v{ font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; }
+  .tri-item .v{ font-family:'Sarabun',sans-serif; font-size:13px; font-weight:600; }
   .tri-item .l{ font-size:10.5px; color:var(--text-faint); margin-top:3px; letter-spacing:0.04em; }
 
   .sensor-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
@@ -334,7 +360,7 @@
   .sensor-head{ display:flex; align-items:center; gap:7px; margin-bottom:6px;}
   .sensor-name{ font-size:12px; color:var(--text-muted); font-weight:500;}
   .sensor-icon{ font-size:15px; opacity:0.8; }
-  .sensor-value{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; letter-spacing:-0.01em;}
+  .sensor-value{ font-family:'Sarabun',sans-serif; font-size:22px; font-weight:700; letter-spacing:-0.01em;}
   .sensor-unit{ font-size:12px; color:var(--text-faint); margin-left:3px; font-weight:400;}
   .sensor-range{ font-size:10.5px; color:var(--text-faint); margin-top:3px;}
   .spark-wrap{ flex:0 0 78px; width:78px; }
@@ -360,8 +386,8 @@
   .log-body{ flex:1; }
   .log-top{ display:flex; justify-content:space-between; align-items:baseline; gap:8px;}
   .log-title{ font-size:13px; font-weight:600; }
-  .log-time{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-faint); white-space:nowrap;}
-  .log-detail{ font-size:11.5px; color:var(--text-muted); margin-top:3px; font-family:'JetBrains Mono',monospace; }
+  .log-time{ font-family:'Sarabun',sans-serif; font-size:11px; color:var(--text-faint); white-space:nowrap;}
+  .log-detail{ font-size:11.5px; color:var(--text-muted); margin-top:3px; font-family:'Sarabun',sans-serif; }
   .log-empty{ font-size:12px; color:var(--text-faint); padding:14px 2px; text-align:center; }
 
   .sim-btn{
@@ -459,7 +485,7 @@
   .contact-info{ flex:1; min-width:0; }
   .contact-name{ font-size:13px; font-weight:600; }
   .contact-sub{ font-size:11px; color:var(--text-faint); margin-top:1px; }
-  .contact-number{ font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text-muted); margin-top:2px; }
+  .contact-number{ font-family:'Sarabun',sans-serif; font-size:12.5px; color:var(--text-muted); margin-top:2px; }
   .call-btn{
     display:inline-flex; align-items:center; gap:6px;
     background:rgba(34,197,94,0.14); color:var(--moss); border:1px solid rgba(34,197,94,0.3);
@@ -473,7 +499,7 @@
     background:var(--bg-panel-raised); border:1px solid var(--line); border-radius:11px;
     padding:12px 10px; text-align:center;
   }
-  .stat-value{ font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:700; }
+  .stat-value{ font-family:'Sarabun',sans-serif; font-size:22px; font-weight:700; }
   .stat-label{ font-size:10.5px; color:var(--text-faint); margin-top:4px; line-height:1.4; }
   .export-row{ display:flex; gap:8px; flex-wrap:wrap; }
   .export-btn{
@@ -531,8 +557,8 @@
     .map-row{ gap:12px; margin-top:12px; }
     .node-card{ padding:11px 12px; }
     .log-list{ max-height:300px; flex:0 0 auto; }
-    .week-chip{ min-width:60px; padding:7px 4px; }
-    .week-chip .wc-val{ font-size:13px; }
+    .day-card-grid{ grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:8px; }
+    .day-card{ padding:10px 10px 9px; }
   }
 
   @media (max-width: 480px){
@@ -548,7 +574,7 @@
   .map-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; gap:10px;}
   .map-holder{ height:380px; border-radius:10px; overflow:hidden; border:1px solid var(--line); position:relative; }
   @media (min-width: 1101px) and (max-width: 1300px){ .map-holder{ height:340px; } }
-  .leaflet-container{ background:#e5e3df !important; font-family:'IBM Plex Sans Thai',sans-serif; }
+  .leaflet-container{ background:#e5e3df !important; font-family:'Sarabun',sans-serif; }
   .gps-fix{
     display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-muted);
     padding:6px 12px; border:1px solid var(--line); border-radius:100px; background:var(--bg-panel-raised);
@@ -568,7 +594,7 @@
   .risk-legend-rows{ display:flex; flex-direction:column; gap:5px; }
   .risk-legend-row{ display:flex; align-items:center; gap:8px; font-size:11px; color:rgba(255,255,255,0.88); }
   .risk-legend-swatch{ width:9px; height:9px; border-radius:2px; flex-shrink:0; }
-  .risk-legend-row b{ color:#ffffff; font-weight:600; font-family:'JetBrains Mono', monospace; font-size:10.5px; }
+  .risk-legend-row b{ color:#ffffff; font-weight:600; font-family:'Sarabun',sans-serif; font-size:10.5px; }
   @media (max-width: 640px){
     .risk-legend{ left:12px; right:12px; bottom:12px; max-width:none; padding:10px 12px; }
     .risk-legend-rows{ flex-direction:row; flex-wrap:wrap; gap:8px 14px; }
@@ -589,13 +615,13 @@
   .node-marker{ width:11px; height:11px; border-radius:50%; flex-shrink:0; }
   .node-info{ flex:1; }
   .node-name{ font-size:13px; font-weight:600; }
-  .node-coord{ font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-faint); margin-top:2px;}
+  .node-coord{ font-family:'Sarabun',sans-serif; font-size:10.5px; color:var(--text-faint); margin-top:2px;}
   .node-state{ font-size:11px; font-weight:600; }
 
   .leaflet-popup-content-wrapper{ background:var(--bg-panel); color:var(--text-primary); border-radius:10px; border:1px solid var(--line); }
   .leaflet-popup-tip{ background:var(--bg-panel); }
   .popup-title{ font-weight:700; font-size:13px; margin-bottom:6px; }
-  .popup-row{ font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--text-muted); line-height:1.6;}
+  .popup-row{ font-family:'Sarabun',sans-serif; font-size:11.5px; color:var(--text-muted); line-height:1.6;}
 
   .map-pin{ filter:drop-shadow(0 3px 4px rgba(0,0,0,0.45)); position:relative; }
   .map-pin-ring{
@@ -720,7 +746,7 @@
     <div class="drawer-section-title">ภาพรวมระบบ</div>
     <a class="drawer-link" data-section="gaugePanel" href="#gaugePanel" onclick="navigateDrawer(event,'gaugePanel')">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 18 0"/><path d="M12 12 16 8"/><path d="M3 12h2"/><path d="M19 12h2"/></svg>
-    สถานการณ์ปัจจุบัน
+      ระดับความเสี่ยงไฟป่าตอนนี้
     </a>
     <a class="drawer-link" data-section="trendSection" href="#trendSection" onclick="navigateDrawer(event,'trendSection')">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-4 4"/></svg>
@@ -728,7 +754,7 @@
     </a>
     <a class="drawer-link" data-section="mapSection" href="#mapSection" onclick="navigateDrawer(event,'mapSection')">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 3 17V4l6 3m0 13 6-3m-6 3V7m6 10 6 3V7l-6-3m0 13V4m0 3-6-3"/></svg>
-      แผนที่โหนดเซนเซอร์
+      แผนที่จุดตรวจวัด
     </a>
     <a class="drawer-link" data-section="historySection" href="#historySection" onclick="navigateDrawer(event,'historySection')">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
@@ -736,7 +762,7 @@
     </a>
     <a class="drawer-link" data-section="logPanel" href="#logPanel" onclick="navigateDrawer(event,'logPanel')">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c.6 2.8-1 4-2.2 5.6C8.6 9.2 8 10.4 8 12a4 4 0 0 0 4 4 4 4 0 0 0 4-4c0-1-.3-1.8-.8-2.6 1.6 1.2 2.8 3 2.8 5.1A6.5 6.5 0 0 1 5 14.5C5 9.8 9 6 12 2Z"/></svg>
-      บันทึกการแจ้งเตือน
+      ประวัติการแจ้งเตือนที่ผ่านมา
     </a>
 
     <div class="drawer-section-title">ข้อมูลและการติดต่อ</div>
@@ -746,7 +772,7 @@
     </a>
     <a class="drawer-link" data-section="nodePanel" href="#nodePanel" onclick="navigateDrawer(event,'nodePanel')">
       <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01"/><path d="M8 17h.01"/></svg>
-      โหนดในเครือข่าย
+      จุดตรวจวัดทั้งหมด
     </a>
 
     <div class="drawer-section-title">ระบบ</div>
@@ -782,7 +808,7 @@
       <span class="role-badge admin admin-only" id="adminModeBadge">ADMIN MODE</span>
       <button class="logout-btn icon-btn" id="soundToggleBtn" onclick="toggleAlarmSound()" title="เปิด/ปิดเสียงเตือนไฟป่า"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> เสียงเตือน</button>
       <button class="logout-btn icon-btn" id="notifyToggleBtn" onclick="requestDesktopNotifyPermission()" title="เปิดแจ้งเตือนบนหน้าจอ (Desktop Notification) เผื่อสลับไปแท็บอื่น"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg> เปิดแจ้งเตือนหน้าจอ</button>
-      <div class="status-chip"><span class="dot" id="connDot"></span><span id="connText">โหนดเซนเซอร์ออนไลน์</span></div>
+      <div class="status-chip"><span class="dot" id="connDot"></span><span id="connText">จุดตรวจวัดเชื่อมต่ออยู่</span></div>
       <div class="clock mono" id="clock">--:--:--</div>
       <button class="logout-btn" id="adminLoginBtn" onclick="openAdminLogin()">สำหรับผู้ดูแลระบบ (Admin)</button>
       <button class="logout-btn admin-only" id="logoutBtn" onclick="logout()">ออกจากระบบ</button>
@@ -795,7 +821,7 @@
         <div class="fire-banner-icon"><svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c.6 2.8-1 4-2.2 5.6C8.6 9.2 8 10.4 8 12a4 4 0 0 0 4 4 4 4 0 0 0 4-4c0-1-.3-1.8-.8-2.6 1.6 1.2 2.8 3 2.8 5.1A6.5 6.5 0 0 1 5 14.5C5 9.8 9 6 12 2Z"/></svg></div>
         <div>
           <div class="fire-banner-title">ตรวจพบสภาวะไฟป่า — โทรแจ้งเหตุทันที</div>
-          <div class="fire-banner-sub">Sender-01 · อ.ปากช่อง จ.นครราชสีมา</div>
+          <div class="fire-banner-sub">จุดตรวจวัด: โรงเรียนปากช่อง อ.ปากช่อง จ.นครราชสีมา</div>
         </div>
       </div>
       <div class="fire-banner-actions">
@@ -822,7 +848,7 @@
         <div class="fire-banner-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 9v5"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></svg></div>
         <div>
           <div class="fire-banner-title">เข้าสู่สภาวะเฝ้าระวัง — ค่าความเสี่ยงเริ่มสูงขึ้น</div>
-          <div class="fire-banner-sub">Sender-01 · อ.ปากช่อง จ.นครราชสีมา</div>
+          <div class="fire-banner-sub">จุดตรวจวัด: โรงเรียนปากช่อง อ.ปากช่อง จ.นครราชสีมา</div>
         </div>
       </div>
     </div>
@@ -840,12 +866,12 @@
   <div class="grid">
 
     <div class="panel gauge-panel state-normal" id="gaugePanel">
-      <div class="panel-label" style="align-self:flex-start;">สถานการณ์ปัจจุบัน</div>
+      <div class="panel-label" style="align-self:flex-start;">ระดับความเสี่ยงไฟป่าตอนนี้</div>
       <div class="gauge-wrap">
         <canvas id="gaugeCanvas" width="250" height="250"></canvas>
         <div class="gauge-readout">
           <div class="gauge-pct mono" id="gaugePct">--%</div>
-          <div class="gauge-pct-label">ความน่าจะเป็น</div>
+          <div class="gauge-pct-label">ความมั่นใจของระบบ</div>
         </div>
       </div>
       <div class="status-pill"><span class="ring"></span><span id="statusText">รอข้อมูล...</span></div>
@@ -870,7 +896,7 @@
         </div>
         <div class="sensor-card">
           <div class="sensor-info">
-            <div class="sensor-head"><span class="sensor-name">ความชื้นสัมพัทธ์</span><span class="sensor-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7 17 9a7 7 0 1 1-10 0z"/></svg></span></div>
+            <div class="sensor-head"><span class="sensor-name">ความชื้นในอากาศ</span><span class="sensor-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7 17 9a7 7 0 1 1-10 0z"/></svg></span></div>
             <div><span class="sensor-value mono" id="valHum">--</span><span class="sensor-unit">%</span></div>
             <div class="sensor-range">ช่วงปกติ: 45–90%</div>
           </div>
@@ -878,7 +904,7 @@
         </div>
         <div class="sensor-card">
           <div class="sensor-info">
-            <div class="sensor-head"><span class="sensor-name">ควัน (MQ-2)</span><span class="sensor-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21c1.3-2.3 1.3-4.7 0-7"/><path d="M11 21c1.3-3.3 1.3-6.7-.5-10"/><path d="M16 21c1.8-4 1.3-8.3-1-12.5"/></svg></span></div>
+            <div class="sensor-head"><span class="sensor-name">ควัน / แก๊ส</span><span class="sensor-icon"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21c1.3-2.3 1.3-4.7 0-7"/><path d="M11 21c1.3-3.3 1.3-6.7-.5-10"/><path d="M16 21c1.8-4 1.3-8.3-1-12.5"/></svg></span></div>
             <div><span class="sensor-value mono" id="valSmoke">--</span><span class="sensor-unit">ppm</span></div>
             <div class="sensor-range">ช่วงปกติ: &lt; 800 ADC</div>
           </div>
@@ -896,7 +922,7 @@
 
       <div class="panel trend-panel" id="trendSection">
         <div class="trend-head">
-          <div class="panel-label" style="margin-bottom:0;">แนวโน้มค่าจากเซนเซอร์ (ล่าสุด)</div>
+          <div class="panel-label" style="margin-bottom:0;">กราฟค่าจากเซนเซอร์ (ช่วงล่าสุด)</div>
           <div class="legend">
             <div class="legend-item" id="legendItem0" onclick="toggleSeries(0)"><span class="legend-dot" style="background:#e8642b;"></span>อุณหภูมิ</div>
             <div class="legend-item" id="legendItem1" onclick="toggleSeries(1)"><span class="legend-dot" style="background:#4a8fd4;"></span>ความชื้น</div>
@@ -909,7 +935,7 @@
     </div>
 
     <div class="panel log-panel" id="logPanel">
-      <div class="panel-label">บันทึกการแจ้งเตือน</div>
+      <div class="panel-label">ประวัติการแจ้งเตือนที่ผ่านมา</div>
       <div class="log-list" id="logList"></div>
       <!-- ปุ่มจำลองข้อมูล: เฉพาะผู้ดูแลระบบ -->
       <button class="sim-btn admin-only" id="simBtn"><svg class="ico" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg> จำลองข้อมูลเซนเซอร์ใหม่ (ทดสอบ)</button>
@@ -920,7 +946,7 @@
   <div class="map-row">
     <div class="panel map-panel" id="mapSection">
       <div class="map-head">
-        <div class="panel-label" style="margin-bottom:0;">ตำแหน่งโหนดเซนเซอร์ภาคสนาม</div>
+        <div class="panel-label" style="margin-bottom:0;">ตำแหน่งจุดตรวจวัดในพื้นที่</div>
         <div class="gps-fix"><span class="dot" id="gpsDot"></span><span id="gpsFixText">GPS Fix · ความแม่นยำ ~3 ม.</span></div>
       </div>
       <div class="map-holder" id="mapHolder">
@@ -941,11 +967,11 @@
     </div>
 
     <div class="panel node-panel" id="nodePanel">
-      <div class="panel-label">โหนดในเครือข่าย</div>
+      <div class="panel-label">จุดตรวจวัดทั้งหมด</div>
       <div class="node-card">
         <div class="node-marker" id="nodeMarkerDot" style="background:#7fa65c; box-shadow:0 0 7px #7fa65c;"></div>
         <div class="node-info">
-          <div class="node-name">Sender-01</div>
+          <div class="node-name">จุดตรวจวัดที่ 1 — โรงเรียนปากช่อง</div>
           <div class="node-coord" id="nodeCoordText">รอข้อมูล...</div>
         </div>
         <div class="node-state" id="nodeStateText" style="color:#7fa65c;">-</div>
@@ -956,11 +982,11 @@
           <div class="node-mini-value mono" id="lastUpdateText">--:--:--</div>
         </div>
         <div class="node-mini-stat">
-          <div class="node-mini-label">จำนวนโหนด</div>
+          <div class="node-mini-label">จำนวนจุดตรวจวัด</div>
           <div class="node-mini-value mono">1 จุด</div>
         </div>
         <div class="node-mini-stat">
-          <div class="node-mini-label">สถานะโหนด</div>
+          <div class="node-mini-label">สถานะการเชื่อมต่อ</div>
           <div class="node-mini-value mono" id="nodeHealthText">--</div>
         </div>
         <div class="node-mini-stat">
@@ -973,7 +999,7 @@
       </div>
       <div class="gauge-note" style="text-align:left; margin-top:2px;">
         พิกัดอ้างอิงจากโมดูล GPS (NEO-6M) บนบอร์ด Sender ส่งพ่วงมากับข้อมูลเซนเซอร์ทุกรอบผ่าน LoRa<br><br>
-        เมื่อมีการติดตั้งหลายจุดในอนาคต แต่ละโหนดจะแสดงเป็นหมุดแยกกันบนแผนที่ พร้อมสีบ่งบอกสถานะของแต่ละจุด
+        เมื่อติดตั้งเพิ่มในอนาคต แต่ละจุดตรวจวัดจะแสดงเป็นหมุดแยกกันบนแผนที่ พร้อมสีบอกสถานะของแต่ละจุด
       </div>
     </div>
   </div>
@@ -1022,7 +1048,7 @@
 
     <!-- สรุปรายสัปดาห์ & ส่งออกข้อมูล: เฉพาะผู้ดูแลระบบ -->
     <div class="panel admin-only block">
-      <div class="panel-label">สรุปรายสัปดาห์ &amp; ส่งออกข้อมูล</div>
+      <div class="panel-label">สรุปข้อมูลย้อนหลัง และดาวน์โหลดรายงาน</div>
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-value mono" id="statFire" style="color:var(--ember);">0</div>
@@ -1034,7 +1060,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-value mono" id="statUptime" style="color:var(--moss);">--%</div>
-          <div class="stat-label">Uptime ของโหนด<br>เซนเซอร์</div>
+          <div class="stat-label">เชื่อมต่อได้ต่อเนื่อง<br>กี่% ของเวลาทั้งหมด</div>
         </div>
       </div>
       <div class="export-row">
@@ -1042,7 +1068,7 @@
         <button class="export-btn" id="printBtn"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="7" rx="1.5"/><path d="M7 16h10v6H7z"/></svg> พิมพ์รายงาน</button>
       </div>
       <div class="gauge-note" style="text-align:left; margin-top:14px;">
-        ข้อมูลสรุปคำนวณจากบันทึกการแจ้งเตือนที่ดึงมาจาก Google Sheet ใช้สำหรับทำรายงานประจำให้หน่วยงานที่เกี่ยวข้อง
+        ข้อมูลสรุปคำนวณจากประวัติการแจ้งเตือนที่ผ่านมาที่ดึงมาจาก Google Sheet ใช้สำหรับทำรายงานประจำให้หน่วยงานที่เกี่ยวข้อง
       </div>
     </div>
   </div>
@@ -1050,12 +1076,12 @@
   <!-- ===== ประวัติย้อนหลัง 7 วัน ===== -->
   <div class="panel trend-panel" id="historySection" style="margin-top:16px;">
     <div class="panel-label" style="margin-bottom:0;">ประวัติย้อนหลัง 7 วัน</div>
-    <div class="week-chip-row" id="weekChipRow"></div>
+    <div class="day-card-grid" id="weekChipRow"></div>
     <div style="height:220px; margin-top:10px;">
       <canvas id="weeklyChart"></canvas>
     </div>
     <div class="gauge-note" style="text-align:left; margin-top:10px;">
-      ค่าเฉลี่ย/สูงสุดรายวันจากข้อมูลจริงที่บันทึกไว้ (หากยังไม่มีข้อมูลย้อนหลังเพียงพอ จะแสดงข้อมูลตัวอย่างชั่วคราวแทน)
+      สรุปข้อมูลแต่ละวันจากค่าที่วัดได้จริง หากเพิ่งเริ่มใช้งานและข้อมูลยังไม่ครบ 7 วัน ระบบจะแสดงตัวอย่างคร่าวๆ ไปพลางก่อน แล้วจะเปลี่ยนเป็นข้อมูลจริงเองเมื่อสะสมครบ
     </div>
   </div>
 
@@ -1297,7 +1323,7 @@ function setConnStatus(kind, extraText){
   text.textContent = extraText;
 }
 
-/* ---------- "สถานะโหนด" (node health badge) ----------
+/* ---------- "สถานะการเชื่อมต่อ" (node health badge) ----------
    ยังไม่มีเซนเซอร์แบตเตอรี่จริง (ตอนนี้ทดสอบด้วย Power Bank) จึงยังบอก "แบตกี่ %" ไม่ได้
    สิ่งที่บอกได้จริงตอนนี้คือ "ยังติดต่อโหนดได้อยู่ไหม" เท่านั้น จึงใช้ 4 สถานะนี้:
      ONLINE        = ได้รับข้อมูลใหม่ภายในเวลาที่กำหนด (ปกติดี)
@@ -1309,11 +1335,11 @@ function updateNodeHealthBadge(kind){
   const el = document.getElementById('nodeHealthText');
   if(!el) return;
   const map = {
-    'online':          { text: 'ONLINE',          color: COLORS.normal },
-    'signal-lost':      { text: 'SIGNAL LOST',      color: COLORS.watch },
-    'signal-lost-risk': { text: 'SIGNAL LOST ⚠',    color: COLORS.fire },
-    'offline':          { text: 'OFFLINE',          color: COLORS.fire },
-    'error':            { text: 'SENSOR ERROR',     color: STATUS_ERROR_COLOR }
+    'online':           { text: 'เชื่อมต่ออยู่',         color: COLORS.normal },
+    'signal-lost':       { text: 'ขาดการติดต่อ',         color: COLORS.watch },
+    'signal-lost-risk':  { text: 'ขาดการติดต่อ (เสี่ยงสูง)', color: COLORS.fire },
+    'offline':           { text: 'ไม่เชื่อมต่อ',          color: COLORS.fire },
+    'error':             { text: 'เซนเซอร์ผิดปกติ',       color: STATUS_ERROR_COLOR }
   };
   const s = map[kind] || map['offline'];
   el.textContent = s.text;
@@ -1441,7 +1467,7 @@ function showDesktopNotification(state, label){
   const title = state === 'fire'
     ? '🔥 ตรวจพบสภาวะไฟป่า — Forest Guard'
     : '⚠️ เข้าสู่สภาวะเฝ้าระวัง — Forest Guard';
-  const body = `Sender-01 · อ.ปากช่อง จ.นครราชสีมา\n${label} — โทรแจ้งเหตุ 199 หรือ 1362`;
+  const body = `จุดตรวจวัด: โรงเรียนปากช่อง อ.ปากช่อง จ.นครราชสีมา\n${label} — โทรแจ้งเหตุ 199 หรือ 1362`;
   try{
     const n = new Notification(title, {
       body,
@@ -1657,7 +1683,7 @@ function updateMapMarker(state, lat, lng){
   nodeMarker.setLatLng([lat, lng]);
   const stateLabel = state==='fire' ? 'ไฟป่า' : state==='watch' ? 'เฝ้าระวัง' : 'ปกติ';
   nodeMarker.setPopupContent(`
-    <div class="popup-title">Sender-01 · จุดตรวจวัดหลัก</div>
+    <div class="popup-title">จุดตรวจวัดหลัก (โรงเรียนปากช่อง)</div>
     <div class="popup-row">Lat: ${lat.toFixed(5)}</div>
     <div class="popup-row">Lng: ${lng.toFixed(5)}</div>
     <div class="popup-row">สถานะ: ${stateLabel}</div>
@@ -1762,7 +1788,7 @@ function refreshConnAge(){
     setConnStatus('stale', `ข้อมูลไม่อัปเดต (${formatAge(ageMs)}ที่แล้ว)${riskNote}`);
     updateNodeHealthBadge(highRisk ? 'signal-lost-risk' : 'signal-lost');
   } else {
-    setConnStatus('online', 'โหนดเซนเซอร์ออนไลน์');
+    setConnStatus('online', 'จุดตรวจวัดเชื่อมต่ออยู่');
     updateNodeHealthBadge('online');
   }
 }
@@ -1880,18 +1906,18 @@ function setupDashboard(){
         }
       }},
       scales:{
-        x:{ grid:{ color:'#e8f0e2' }, ticks:{ color:'#8a9885', font:{family:'JetBrains Mono', size:10} } },
+        x:{ grid:{ color:'#e8f0e2' }, ticks:{ color:'#8a9885', font:{family:'Sarabun', size:10} } },
         y:{
           position:'left',
           title:{ display:true, text:'อุณหภูมิ / ความชื้น', color:'#8a9885', font:{size:10.5} },
           grid:{ color:'#e8f0e2' },
-          ticks:{ color:'#8a9885', font:{family:'JetBrains Mono', size:10} }
+          ticks:{ color:'#8a9885', font:{family:'Sarabun', size:10} }
         },
         y1:{
           position:'right',
           title:{ display:true, text:'ควัน / ฝุ่น', color:'#8a9885', font:{size:10.5} },
           grid:{ drawOnChartArea:false },
-          ticks:{ color:'#8a9885', font:{family:'JetBrains Mono', size:10} }
+          ticks:{ color:'#8a9885', font:{family:'Sarabun', size:10} }
         }
       }
     }
@@ -1926,7 +1952,7 @@ function setupDashboard(){
 
   nodeMarker = L.marker([NODE_LAT, NODE_LNG], { icon: pinIcon(COLORS.normal, false) }).addTo(map);
   nodeMarker.bindPopup(`
-    <div class="popup-title">Sender-01 · จุดตรวจวัดหลัก</div>
+    <div class="popup-title">จุดตรวจวัดหลัก (โรงเรียนปากช่อง)</div>
     <div class="popup-row">Lat: ${NODE_LAT.toFixed(5)}</div>
     <div class="popup-row">Lng: ${NODE_LNG.toFixed(5)}</div>
     <div class="popup-row">สถานะ: ปกติ</div>
@@ -2039,9 +2065,9 @@ function setupWeeklyChart(){
         }
       },
       scales:{
-        x:{ grid:{ color:'#e8f0e2' }, ticks:{ color:'#8a9885', font:{family:'JetBrains Mono', size:10} } },
-        y:{ position:'left', grid:{ color:'#e8f0e2' }, ticks:{ color:'#8a9885', font:{family:'JetBrains Mono', size:10} } },
-        y1:{ position:'right', grid:{ drawOnChartArea:false }, ticks:{ color:'#8a9885', font:{family:'JetBrains Mono', size:10} } }
+        x:{ grid:{ color:'#e8f0e2' }, ticks:{ color:'#8a9885', font:{family:'Sarabun', size:10} } },
+        y:{ position:'left', grid:{ color:'#e8f0e2' }, ticks:{ color:'#8a9885', font:{family:'Sarabun', size:10} } },
+        y1:{ position:'right', grid:{ drawOnChartArea:false }, ticks:{ color:'#8a9885', font:{family:'Sarabun', size:10} } }
       }
     }
   });
@@ -2051,21 +2077,63 @@ function dayLabelThai(d){
   return d.toLocaleDateString('th-TH', { weekday:'short', day:'2-digit', month:'2-digit' });
 }
 
-function riskClassFromPM(pmMax){
-  if(pmMax >= 150) return 'risk-fire';
-  if(pmMax >= 50) return 'risk-watch';
+function isSameCalendarDay(a, b){
+  return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+}
+
+// [แก้ไข] เอา riskClassFromPM() ที่เดาความเสี่ยงจาก PM2.5 อย่างเดียวออก (บั๊กเดิม
+// ไม่ได้ดู risk_level จริงจากโมเดลเลย) เปลี่ยนเป็นสรุปจาก "สัดส่วน risk_level"
+// ของทุกแพ็กเก็ตที่บันทึกได้ในวันนั้นแทน — badge หลักของการ์ดใช้ "ระดับสูงสุด
+// ที่เคยเกิดในวันนั้น" (worst-case) เพื่อความปลอดภัย ส่วนแถบด้านล่างโชว์สัดส่วน
+// เต็มรูปแบบทั้ง 3 ระดับ (Normal/Warning/Fire) เป็นเปอร์เซ็นต์
+function riskClassFromWorst(worst){
+  if(worst === 2) return 'risk-fire';
+  if(worst === 1) return 'risk-watch';
   return 'risk-normal';
+}
+function riskLabelFromWorst(worst){
+  if(worst === 2) return 'ไฟป่า';
+  if(worst === 1) return 'เฝ้าระวัง';
+  return 'ปกติ';
 }
 
 function renderWeekChips(days){
   const row = document.getElementById('weekChipRow');
   if(!row) return;
-  row.innerHTML = days.map(d => `
-    <div class="week-chip ${riskClassFromPM(d.pmMax)}">
-      <div class="wc-day">${d.label}</div>
-      <div class="wc-val mono">${d.pmMax.toFixed(0)}</div>
-    </div>
-  `).join('');
+  const today = new Date();
+
+  row.innerHTML = days.map(d => {
+    const total = Math.max(1, d.riskCounts[0] + d.riskCounts[1] + d.riskCounts[2]);
+    const pctNormal = Math.round(d.riskCounts[0] / total * 100);
+    const pctWatch  = Math.round(d.riskCounts[1] / total * 100);
+    // กันปัดเศษรวมกันไม่เท่า 100% พอดี — ให้ Fire รับส่วนที่เหลือ
+    const pctFire   = Math.max(0, 100 - pctNormal - pctWatch);
+    const todayCls  = isSameCalendarDay(d.date, today) ? ' is-today' : '';
+
+    return `
+    <div class="day-card ${riskClassFromWorst(d.worstRisk)}${todayCls}">
+      <div class="day-card-head">
+        <div class="dc-day">${d.label}</div>
+        <div class="dc-badge">${riskLabelFromWorst(d.worstRisk)}</div>
+      </div>
+      <div class="dc-stats">
+        <div class="dc-stat"><span class="dc-label">อุณหภูมิเฉลี่ย</span><span class="dc-value">${d.tempAvg.toFixed(1)}°C</span></div>
+        <div class="dc-stat"><span class="dc-label">ความชื้นเฉลี่ย</span><span class="dc-value">${d.humAvg.toFixed(0)}%</span></div>
+        <div class="dc-stat"><span class="dc-label">PM2.5 สูงสุด</span><span class="dc-value">${d.pmMax.toFixed(0)}</span></div>
+        <div class="dc-stat"><span class="dc-label">ควันสูงสุด</span><span class="dc-value">${d.smokeMax.toFixed(0)}</span></div>
+      </div>
+      <div class="dc-risk-bar">
+        <span class="seg-normal" style="width:${pctNormal}%"></span>
+        <span class="seg-watch"  style="width:${pctWatch}%"></span>
+        <span class="seg-fire"   style="width:${pctFire}%"></span>
+      </div>
+      <div class="dc-risk-legend">
+        <span class="lg-normal">ปกติ ${pctNormal}%</span>
+        <span class="lg-watch">เฝ้าระวัง ${pctWatch}%</span>
+        <span class="lg-fire">ไฟป่า ${pctFire}%</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderWeeklyChart(days){
@@ -2079,6 +2147,8 @@ function renderWeeklyChart(days){
 }
 
 // สร้างข้อมูลตัวอย่าง 7 วันไว้ใช้ตอนยังดึงข้อมูลจริงไม่ได้/ยังมีข้อมูลไม่พอ
+// [แก้ไข] เพิ่ม riskCounts (สัดส่วน Normal/Warning/Fire จำลอง) + worstRisk + smokeMax
+// ให้ตรงกับโครงสร้างข้อมูลใหม่ที่ day-card ต้องใช้แสดงผล
 function buildMockWeeklyData(){
   const days = [];
   const now = new Date();
@@ -2086,11 +2156,31 @@ function buildMockWeeklyData(){
     const d = new Date(now);
     d.setDate(d.getDate() - i);
     const roll = Math.random();
-    let tempAvg, humAvg, pmMax;
-    if(roll < 0.7){ tempAvg = 26 + Math.random()*6; humAvg = 55 + Math.random()*25; pmMax = 15 + Math.random()*30; }
-    else if(roll < 0.9){ tempAvg = 33 + Math.random()*5; humAvg = 30 + Math.random()*15; pmMax = 55 + Math.random()*70; }
-    else { tempAvg = 38 + Math.random()*8; humAvg = 15 + Math.random()*15; pmMax = 160 + Math.random()*150; }
-    days.push({ label: dayLabelThai(d), tempAvg, humAvg, pmMax });
+    let tempAvg, humAvg, pmMax, smokeMax, worstRisk, riskCounts;
+
+    // จำลองจำนวน reading ต่อวัน (สมมติ ~200 ครั้ง/วัน) แล้วแบ่งสัดส่วนตาม roll
+    const totalReadings = 180 + Math.floor(Math.random()*40);
+    if(roll < 0.7){
+      tempAvg = 26 + Math.random()*6; humAvg = 55 + Math.random()*25;
+      pmMax = 15 + Math.random()*30; smokeMax = 80 + Math.random()*150;
+      worstRisk = 0;
+      riskCounts = [totalReadings, 0, 0];
+    } else if(roll < 0.9){
+      tempAvg = 33 + Math.random()*5; humAvg = 30 + Math.random()*15;
+      pmMax = 55 + Math.random()*70; smokeMax = 500 + Math.random()*600;
+      worstRisk = 1;
+      const watchN = Math.floor(totalReadings * (0.15 + Math.random()*0.25));
+      riskCounts = [totalReadings - watchN, watchN, 0];
+    } else {
+      tempAvg = 38 + Math.random()*8; humAvg = 15 + Math.random()*15;
+      pmMax = 160 + Math.random()*150; smokeMax = 1800 + Math.random()*2000;
+      worstRisk = 2;
+      const fireN  = Math.floor(totalReadings * (0.03 + Math.random()*0.08));
+      const watchN = Math.floor(totalReadings * (0.1 + Math.random()*0.2));
+      riskCounts = [totalReadings - watchN - fireN, watchN, fireN];
+    }
+
+    days.push({ date: d, label: dayLabelThai(d), tempAvg, humAvg, pmMax, smokeMax, worstRisk, riskCounts });
   }
   return days;
 }
@@ -2106,20 +2196,26 @@ async function fetchWeeklyHistory(){
     }
     const rows = json.data;
 
-    // จัดกลุ่มตามวันที่ (ปฏิทิน) แล้วหาค่าเฉลี่ยอุณหภูมิ/ความชื้น และค่าสูงสุด PM2.5 ต่อวัน
+    // [แก้ไข] จัดกลุ่มตามวันที่ (ปฏิทิน) แล้วเก็บทั้งอุณหภูมิ/ความชื้น/PM2.5/ควัน
+    // และ risk_level ของทุกแพ็กเก็ตในวันนั้นด้วย (ของเดิมไม่เคยเก็บ risk_level เลย
+    // ทำให้การ์ดสรุปรายวันเดาสถานะจาก PM2.5 ผิดๆ แทนที่จะใช้ผลจริงจากโมเดล)
     const byDay = new Map();
     rows.forEach(r=>{
       const t = new Date(r.timestamp);
       if(isNaN(t.getTime())) return;
       const key = t.toISOString().slice(0,10);
-      if(!byDay.has(key)) byDay.set(key, { date:t, temps:[], hums:[], pms:[] });
+      if(!byDay.has(key)) byDay.set(key, { date:t, temps:[], hums:[], pms:[], smokes:[], riskCounts:[0,0,0] });
       const bucket = byDay.get(key);
-      const temp = numOrNull(r.temperature);
-      const hum = numOrNull(r.humidity);
-      const pm = numOrNull(r.pm25);
+      const temp  = numOrNull(r.temperature);
+      const hum   = numOrNull(r.humidity);
+      const pm    = numOrNull(r.pm25);
+      const smoke = numOrNull(r.smoke);
+      const risk  = numOrNull(r.risk_level);
       if(temp !== null) bucket.temps.push(temp);
       if(hum !== null) bucket.hums.push(hum);
       if(pm !== null) bucket.pms.push(pm);
+      if(smoke !== null) bucket.smokes.push(smoke);
+      if(risk === 0 || risk === 1 || risk === 2) bucket.riskCounts[risk]++;
     });
 
     const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
@@ -2128,7 +2224,18 @@ async function fetchWeeklyHistory(){
     let days = Array.from(byDay.values())
       .sort((a,b)=> a.date - b.date)
       .slice(-7)
-      .map(b => ({ label: dayLabelThai(b.date), tempAvg: avg(b.temps), humAvg: avg(b.hums), pmMax: max(b.pms) }));
+      .map(b => ({
+        date: b.date,
+        label: dayLabelThai(b.date),
+        tempAvg: avg(b.temps),
+        humAvg: avg(b.hums),
+        pmMax: max(b.pms),
+        smokeMax: max(b.smokes),
+        riskCounts: b.riskCounts,
+        // worstRisk = ระดับสูงสุดที่เคยเกิดในวันนั้น (ถือหลักความปลอดภัยไว้ก่อน
+        // แม้จะเกิดแค่ครั้งเดียวในวัน ก็ยังอยากให้ badge เตือนไว้)
+        worstRisk: b.riskCounts[2] > 0 ? 2 : (b.riskCounts[1] > 0 ? 1 : 0)
+      }));
 
     // ถ้าข้อมูลจริงยังมีไม่ครบ 7 วัน (เช่นเพิ่งติดตั้งระบบ) เติมข้อมูลตัวอย่างให้ครบ
     // เพื่อให้เห็นรูปแบบกราฟที่ควรจะเป็น (จะถูกแทนที่ด้วยข้อมูลจริงเองเมื่อสะสมครบ)
